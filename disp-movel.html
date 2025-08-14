@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/ico" href="rede.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disponibilidade Móvel</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DataTables CSS -->
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <style>
+    /* Corpo e fontes */
+    body {
+        zoom: 53%;
+        background-color: #d5d5d5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+      /* Navbar com fundo claro */
+      .navbar-custom {
+        background-color: #d5d5d5;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .navbar-custom .navbar-brand,
+      .navbar-custom .nav-link {
+        color: #333;
+      }
+      /* Seção Hero com gradiente suave e texto escuro */
+      .hero-vivo {
+    position: relative;
+    background: url('images/antenna-map.jpg') center/cover no-repeat;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, #003078e4, #4a096bef);
+  }
+  .hero-content {
+    position: relative;
+    color: #fff;
+    z-index: 1;
+    max-width: 800px;
+  }
+  .hero-content h1 {
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .hero-content .lead {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  #refreshData {
+    font-weight: 600;
+  }
+  
+  
+  
+      /* Card de Busca */
+      .search-card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 15px; /* Reduz o padding interno */
+        box-shadow: 0 4px 12px #0019335a;
+        margin-top: -40px;
+        z-index: 2;
+        position: relative;
+        margin-left: 0; /* Remove margens laterais */
+        margin-right: 0; /* Remove margens laterais */
+      }
+      .search-input, .search-select {
+        height: 50px;
+        font-size: 1rem;
+      }
+      /* Container da Tabela */
+      .center-container {
+        display: flex;
+        justify-content: center;
+      }
+      .table-container {
+        zoom: 85%;
+        width: auto;
+        background-color: #fff;
+        margin-top: 40px;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 12px #0019335a;
+        overflow-x: auto;
+        margin-left: 0; /* Remove margens laterais */
+        margin-right: 0; /* Remove margens laterais */
+      }
+      /* Estilização Customizada para a Tabela */
+      table.dataTable {
+        border-collapse: separate;
+        border-spacing: 0 0.5em;
+      }
+      /* Cabeçalho da tabela repaginado */
+      table.dataTable thead {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+      }
+      table.dataTable thead th {
+        color: #333;
+        border: none;
+        padding: 12px 15px;
+        font-size: 20px;
+        font-weight: 500;
+        white-space: nowrap;
+        text-align: center;
+        font-weight: bold;
+      }
+      table.dataTable tbody {
+        background: transparent;
+      }
+      table.dataTable tbody tr {
+        background-color: #ffffff;
+        border-radius: 8px;
+        width: auto;
+        font-size: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        transition: background-color 0.3s ease;
+        margin-bottom: 10px;
+        white-space: nowrap;
+      }
+      table.dataTable tbody tr:hover {
+        background-color: #f1f1f1;
+      }
+      table.dataTable tbody td {
+    padding: 12px 15px;
+    border: none;
+    vertical-align: middle;
+    text-align: center;
+    font-weight: 600;
+    font-family: 'Verdana', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+      /* Limit the width of the Bairro column and add ellipsis for overflow */
+      table.dataTable tbody td.bairro-column {
+        max-width: 150px; /* Adjust the width as needed */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
+      }
+  
+      /* Add scrolling animation for the text inside the cell */
+      table.dataTable tbody td.bairro-column:hover span {
+        display: inline-block;
+        animation: scrollText 3.5s linear infinite;
+      }
+  
+      table.dataTable tbody td.bairro-column span {
+        display: inline-block;
+        white-space: nowrap;
+      }
+  
+      @keyframes scrollText {
+        0% {
+          transform: translateX(0%);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+  
+      /* DataTables Filtros customizados */
+      .dataTables_wrapper .dataTables_filter input {
+        border: none;
+        color: #fff;
+        border-radius: 4px;
+        padding: 5px;
+        margin-left: 5px;
+        display: none;
+      }
+      .dataTables_wrapper .dataTables_paginate .paginate_button {
+        background-color: #001933 !important;
+        color: #fff !important;
+        border: none;
+        border-radius: 5px;
+        margin: 0 2px;
+      }
+      .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background-color: #001933 !important;
+      }
+      .container {
+        max-width: 95%; /* Reduz a largura máxima para ocupar mais espaço horizontal */
+        padding-left: 10px; /* Reduz o padding lateral */
+        padding-right: 10px; /* Reduz o padding lateral */
+      }
+      .searchable-dropdown {
+        font-size: 20px;
+        position: relative;
+      }
+      .searchable-dropdown input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+      }
+      .dropdown-list {
+        position: absolute;
+        z-index: 1000;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        width: 100%;
+        display: none;
+        font-size: 20px;
+        font-weight: bold;
+        padding-left: 5px;
+      }
+      .dropdown-list.active {
+        display: block;
+      }
+      .dropdown-list div {
+        padding: 10px;
+        cursor: pointer;
+      }
+      .dropdown-list div:hover {
+        background-color: #f1f1f1;
+      }
+      /* Add styles for checkboxes in dropdown */
+      .dropdown-list div {
+        display: flex;
+        align-items: center;
+      }
+      .dropdown-list input {
+        margin-right: 1px;
+      }
+      /* Adjust alignment for checkboxes and text in dropdown */
+      .dropdown-list div {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start; /* Align items to the left */
+        padding-left: 5px; /* Add some padding to the left */
+      }
+      .dropdown-list input {
+        margin-right: 1px;
+      }
+      /* Adjust spacing for checkboxes in dropdown */
+      .dropdown-list div {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 2px 1px; /* Reduce padding for compact layout */
+      }
+      .dropdown-list input[type="checkbox"] {
+        margin-right: 5px; /* Reduce spacing between checkbox and label */
+      }
+      /* Dashboard card styles */
+      .dashboard {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+  
+      }
+      .dashboard-card {
+        flex: 1;
+        margin: 0 10px;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        color: #fff;
+        font-size: 30px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+      }
+      .dashboard-card.total {
+        background-color: #007bff;
+      }
+      .dashboard-card.red {
+        background-color: #f23838;
+      }
+      .dashboard-card.yellow {
+        background-color: #f2d338;
+      }
+      .dashboard-card.green {
+        background-color: #47ab29;
+      }
+      .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      }
+      .dashboard-card:active {
+        transform: translateY(10);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      /* Adjust button styles */
+      .search-card .btn {
+        height: 50px; /* Alinha com a altura dos campos de filtro */
+        font-size: 0.9rem; /* Ajusta o tamanho da fonte */
+        padding: 0 15px; /* Reduz o padding interno */
+        border-radius: 5px; /* Bordas arredondadas */
+        width: 100%; /* Garante que ocupe o espaço da coluna */
+      }
+  
+      .filter-item {
+    padding: 5px;
+    cursor: pointer;
+  }
+  .filter-item.selected {
+    background-color: #e0e0e0;
+  }
+</style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-custom bg-light">
+    <div class="container"></div>
+  </nav>
+
+  <section class="hero-vivo">
+    <div class="hero-overlay"></div>
+    <div class="hero-content text-center my-4">
+      <h1>Dashboard Disponibilidade - Móvel</h1>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="dashboard d-flex justify-content-between mb-4">
+      <div class="dashboard-card total bg-primary text-white p-3 rounded" id="totalSitesCard">Total de Sites: 0</div>
+      <div class="dashboard-card bg-secondary text-white p-3 rounded" id="sitesBairroCard">Total Sites Bairro: 0</div>
+      <div class="dashboard-card red bg-danger text-white p-3 rounded" id="criticalSitesCard">Sites Críticos: 0</div>
+      <div class="dashboard-card yellow bg-warning text-white p-3 rounded" id="alertSitesCard">Sites em Alerta: 0</div>
+      <div class="dashboard-card green bg-success text-white p-3 rounded" id="nonCriticalSitesCard">Sites Não Críticos: 0</div>
+    </div>
+
+    <div class="search-card p-3 bg-white rounded shadow-sm position-relative">
+      <div class="row g-2">
+        <div class="col-md-3 position-relative">
+          <input type="text" id="dddFilterInput" placeholder="Filtrar por DDD" class="form-control" style="font-size:20px;font-weight:800;">
+          <div id="dddDropdown" class="dropdown-list"></div>
+        </div>
+        <div class="col-md-3 position-relative">
+          <input type="text" id="muniFilterInput" placeholder="Filtrar por Município" class="form-control" style="font-size:20px;font-weight:800;">
+          <div id="muniDropdown" class="dropdown-list"></div>
+        </div>
+        <div class="col-md-3 position-relative">
+          <input type="text" id="siteFilterInput" placeholder="Filtrar por Site" class="form-control" style="font-size:20px;font-weight:800;">
+          <div id="siteDropdown" class="dropdown-list"></div>
+        </div>
+        <div class="col-md-1">
+          <button id="clearFilters" class="btn btn-secondary w-100" style="font-size:20px;font-weight:800;">Limpar</button>
+        </div>
+        <div class="col-md-2">
+          <button id="exportExcel" class="btn btn-success w-100" style="font-size:20px;font-weight:450;">Exportar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-container bg-white rounded shadow-sm p-3 overflow-auto mt-3">
+      <table id="oltTable" class="table table-striped table-bordered nowrap" style="width:100%">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    let dadosDisponibilidade = [];
+    let dadosSitesBairro = [];
+    let currentMonths = [];
+    let table;
+    let headCols = [];
+
+    // Carrega dados
+    Promise.all([
+      fetch('https://grupotel-web.github.io/RElTUExPVkVMA/dados.json?cacheBust=' + Date.now()).then(res => res.json()).then(d => dadosDisponibilidade = d),
+      fetch('https://grupotel-web.github.io/RElTUExPVkVMA/sites.json?cacheBust=' + Date.now()).then(res => res.json()).then(d => dadosSitesBairro = d)
+    ]).then(() => {
+      initializeTable();
+      setupFilters();
+      setupActions();
+    }).catch(err => console.error(err));
+
+    function formatCell(value) {
+      if (value == null || value === '') return '<td></td>';
+      const n = parseFloat(value.toString().replace(',', '.'));
+      const bg = n <= 96.99 ? '#f238387d' : n <= 98.99 ? '#f2d3387d' : '#47ab297d';
+      const disp = (n === 100 || n === 0) ? String(n) : n.toFixed(2).replace('.', ',');
+      return `<td style=\"background-color:${bg}\" data-order=\"${n}\">${disp}</td>`;
+    }
+
+    function getDynamicMonthHeaders(data) {
+      const valid = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const keys = Object.keys(data[0] || {}).filter(k => valid.includes(k));
+      keys.sort((a,b) => new Date(`1 ${a} 2000`) - new Date(`1 ${b} 2000`));
+      return keys.map(m => { if (!currentMonths.includes(m)) currentMonths.push(m); return { key:m, display:m }; });
+    }
+    function calculateColumns(item) {
+  const pv = v => v == null || v === '' ? null : parseFloat(v.toString().replace(',', '.'));
+
+  const getCrit = trio => {
+    const below96 = trio.map(pv).map(v => v != null && v < 96 ? 1 : 0);
+    const count = below96.reduce((a, b) => a + b, 0);
+    if (count >= 2) return 'Crítico';
+    if (count === 1 && below96[2] === 1) return 'Alerta'; // último mês < 96
+    return 'Não Crítico';
+  };
+
+  const feb = pv(item['Feb']);
+  const mar = pv(item['Mar']);
+  const apr = pv(item['Apr']);
+  const may = pv(item['May']);
+
+  const critical1 = getCrit([feb, mar, apr]); // Criticidade Abril
+  const critical2 = getCrit([mar, apr, may]); // Criticidade Maio
+
+  // Projeções
+  const recentVals = [feb, mar, apr, may].filter(v => v != null);
+  const avg = recentVals.length ? (recentVals.reduce((sum, v) => sum + v, 0) / recentVals.length).toFixed(2).replace('.', ',') : '0';
+  const stim = recentVals.length ? ((recentVals.reduce((sum, v) => sum + v, 0) + (31 - recentVals.length) * 100) / 31).toFixed(2).replace('.', ',') : '0';
+
+  return { critical1, critical2, projMedia: avg, projEstimulada: stim };
+}
+
+
+
+
+
+    function initializeTable() {
+      const today = new Date();
+      const dateHeaders = [];
+      for (let i = 8; i >= 1; i--) {
+        const d = new Date(today); d.setDate(d.getDate()-i);
+        const dd = String(d.getDate()).padStart(2,'0');
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        dateHeaders.push({ key:`${dd}/${mm}/${d.getFullYear()}`, display:`Disp. ${dd}/${mm}` });
+      }
+      const monthHeaders = getDynamicMonthHeaders(dadosDisponibilidade);
+      const lastMonths = monthHeaders.slice(-2);
+
+      dadosDisponibilidade = dadosDisponibilidade.map(item => {
+        const cols = calculateColumns(item, monthHeaders, dateHeaders);
+        return { ...item,
+          [`Criticidade ${lastMonths[0].display}`]: cols.critical1,
+          [`Criticidade ${lastMonths[1].display}`]: cols.critical2,
+          'Proj. Média': cols.projMedia,
+          'Proj. Estimulada 100%': cols.projEstimulada
+        };
+      });
+
+      headCols = ['DDD','MUNICIPIO','SITE',
+        ...monthHeaders.map(m=>m.display),
+        ...dateHeaders.map(h=>h.display),
+        `Criticidade ${lastMonths[0].display}`,
+        `Criticidade ${lastMonths[1].display}`,'Proj. Média','Proj. Estimulada 100%'
+      ];
+
+      $('#oltTable thead').html('<tr>'+headCols.map(c=>`<th>${c}</th>`).join('')+'</tr>');
+
+      let html='';
+      dadosDisponibilidade.forEach(it=>{
+        html+='<tr>';
+        ['DDD','MUNICIPIO','SITE'].forEach(f=> html+=`<td>${it[f]||''}</td>`);
+        monthHeaders.forEach(m=> html+=formatCell(it[m.key]));
+        dateHeaders.forEach(h=> html+=formatCell(it[h.key]));
+        html+=`<td>${it[`Criticidade ${lastMonths[0].display}`]}</td>`;
+        html+=`<td>${it[`Criticidade ${lastMonths[1].display}`]}</td>`;
+        html+=`<td>${it['Proj. Média']}</td><td>${it['Proj. Estimulada 100%']}</td>`;
+        html+='</tr>';
+      });
+      $('#oltTable tbody').html(html);
+
+      table = $('#oltTable').DataTable({ paging:true, pageLength:20, ordering:true, order:[[0,'asc']], scrollX:true, language:{paginate:{previous:'Anterior',next:'Próximo'},info:'Mostrando _START_ a _END_ de _TOTAL_',infoEmpty:'Mostrando 0 a 0 de 0',zeroRecords:'Nenhum registro encontrado',search:''} });
+      updateCards();
+    }
+
+    function updateCards() {
+  const bairroSet = new Set(dadosSitesBairro.map(s => s.Site));
+  const filtered = dadosDisponibilidade.filter(i => bairroSet.has(i.SITE));
+  const total = filtered.length;
+
+  // Encontra o nome da coluna de critical2
+  const crit2ColName = headCols.find(c => c.startsWith('Criticidade') && c.includes(currentMonths.at(-1)));
+
+  let crit = 0, alert = 0, nonc = 0;
+  filtered.forEach(i => {
+    const val = i[crit2ColName];
+    if (val === 'Crítico') crit++;
+    else if (val === 'Alerta') alert++;
+    else nonc++;
+  });
+
+  $('#totalSitesCard').text(`Total de Sites: ${dadosDisponibilidade.length}`);
+  $('#sitesBairroCard').text(`Total Sites Bairro: ${total}`);
+  $('#criticalSitesCard').text(`Sites Críticos: ${crit}`);
+  $('#alertSitesCard').text(`Sites em Alerta: ${alert}`);
+  $('#nonCriticalSitesCard').text(`Sites Não Críticos: ${nonc}`);
+}
+
+  
+
+    function setupFilters() {
+      function populate(selector, field) {
+        const set = new Set(dadosDisponibilidade.map(i=>i[field]?.trim()));
+        const drop = $(selector).empty();
+        drop.append(`<div class="filter-item" data-value="select-all"><input type="checkbox" class="select-all-checkbox"> Selecionar Todos</div>`);
+        set.forEach(v=>{ if(v) drop.append(`<div class="filter-item" data-value="${v}"><input type="checkbox" class="filter-checkbox" data-value="${v}"> ${v}</div>`); });
+      }
+      populate('#dddDropdown','DDD');
+      populate('#muniDropdown','MUNICIPIO');
+      populate('#siteDropdown','SITE');
+
+      function setup(inputSel, dropSel, colIndex) {
+        const input=$(inputSel), dropdown=$(dropSel), selected=new Set(); let focusIdx=-1;
+        input.on('focus input', ()=>{
+          dropdown.addClass('active');
+          const q=input.val().toLowerCase();
+          const items=dropdown.children().filter(function(){return $(this).text().toLowerCase().includes(q);});
+          dropdown.children().hide(); items.show(); items.removeClass('focused');
+          if(items.length){ focusIdx=0; $(items[0]).addClass('focused'); } else focusIdx=-1;
+        });
+        dropdown.on('click','.filter-item',function(e){ e.stopPropagation(); const cb=$(this).find('input'); const val=$(this).data('value');
+          if(val==='select-all'){ const chk=cb.prop('checked'); dropdown.find('.filter-checkbox').prop('checked',chk);
+            if(chk) dropdown.find('.filter-checkbox').each((_,c)=>selected.add($(c).data('value')));
+            else selected.clear();
+          } else {
+            cb.prop('checked',!cb.prop('checked'));
+            if(cb.prop('checked')) selected.add(val);
+            else{ selected.delete(val); dropdown.find('.select-all-checkbox').prop('checked',false); }
+          }
+          table.column(colIndex).search([...selected].join('|'),true,false).draw();
+        });
+        input.on('keydown',e=>{
+          const items=dropdown.children(':visible');
+          if(e.key==='ArrowDown'){ e.preventDefault(); focusIdx=(focusIdx+1)%items.length; items.removeClass('focused'); $(items[focusIdx]).addClass('focused'); }
+          else if(e.key==='ArrowUp'){ e.preventDefault(); focusIdx=(focusIdx-1+items.length)%items.length; items.removeClass('focused'); $(items[focusIdx]).addClass('focused'); }
+          else if(e.key==='Enter'){ e.preventDefault(); if(focusIdx>=0) $(items[focusIdx]).trigger('click'); }
+        });
+        $(document).click(e=>{ if(!$(e.target).closest(inputSel+','+dropSel).length) dropdown.removeClass('active'); });
+      }
+      setup('#dddFilterInput','#dddDropdown',0);
+      setup('#muniFilterInput','#muniDropdown',1);
+      setup('#siteFilterInput','#siteDropdown',2);
+    }
+
+    function setupActions() {
+  $('#clearFilters').on('click', () => {
+    table.search('').columns().search('').draw();
+    $('.filter-checkbox, .select-all-checkbox').prop('checked', false);
+    $('.dropdown-list').removeClass('active');
+  });
+
+  $('#exportExcel').on('click', () => {
+    const data = table.rows({ search: 'applied' }).nodes().toArray()
+      .map(r => $(r).find('td').toArray().map(c => $(c).text().trim()));
+    const ws = XLSX.utils.aoa_to_sheet([headCols, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Disponibilidade');
+    XLSX.writeFile(wb, 'Disponibilidade_Móvel.xlsx');
+  });
+
+  const bairroRegex = dadosSitesBairro.map(s => `^${s.Site}$`).join('|');
+  const crit2Idx = headCols.findIndex(c => c.startsWith('Criticidade') && c.includes(currentMonths.at(-1)));
+
+  function cardFilter(id, crit, showAll = false) {
+    $(id).off('click').on('click', () => {
+      table.search('').columns().search('').draw();
+
+      if (!showAll) {
+        table.column(2).search(bairroRegex, true, false); // filtro por SITE (bairro)
+      }
+
+      if (crit) {
+        table.column(crit2Idx).search(`^${crit}$`, true, false);
+      }
+
+      table.draw();
+    });
+  }
+
+  // 🔧 Agora esse aqui limpa tudo e mostra todos os sites
+  cardFilter('#totalSitesCard', null, true);
+  cardFilter('#sitesBairroCard', null);
+  cardFilter('#criticalSitesCard', 'Crítico');
+  cardFilter('#alertSitesCard', 'Alerta');
+  cardFilter('#nonCriticalSitesCard', 'Não Crítico');
+}
+
+
+  </script>
+</body>
+</html>

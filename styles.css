@@ -1,0 +1,479 @@
+/* Corpo e fontes */
+    body {
+      zoom: 53%;
+      background-color: #d5d5d5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    /* Navbar com fundo claro */
+    .navbar-custom {
+      background-color: #d5d5d5;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
+      color: #333;
+    }
+    /* Seção Hero com gradiente suave e texto escuro */
+    .hero-vivo {
+  position: relative;
+  background: url('images/antenna-map.jpg') center/cover no-repeat;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, #003078e4, #4a096bef);
+}
+.hero-content {
+  position: relative;
+  color: #fff;
+  z-index: 1;
+  max-width: 800px;
+}
+.hero-content h1 {
+  font-size: 2.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.hero-content .lead {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+#refreshData {
+  font-weight: 600;
+}
+
+
+
+/* Card de Busca */
+    .search-card {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 15px; /* Reduz o padding interno */
+      box-shadow: 0 4px 12px #0019335a;
+      margin-top: -40px;
+      z-index: 2;
+      position: relative;
+      margin-left: 0; /* Remove margens laterais */
+      margin-right: 0; /* Remove margens laterais */
+    }
+    .search-input, .search-select {
+      height: 50px;
+      font-size: 1rem;
+    }
+    /* Container da Tabela */
+    .center-container {
+      display: flex;
+      justify-content: center;
+    }
+    .table-container {
+      zoom: 85%;
+      width: auto;
+      background-color: #fff;
+      margin-top: 40px;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 12px #0019335a;
+      overflow-x: auto;
+      margin-left: 0; /* Remove margens laterais */
+      margin-right: 0; /* Remove margens laterais */
+    }
+    /* Estilização Customizada para a Tabela */
+    table.dataTable {
+      border-collapse: separate;
+      border-spacing: 0 0.5em;
+    }
+    /* Cabeçalho da tabela repaginado */
+    table.dataTable thead {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+    }
+    table.dataTable thead th {
+      color: #333;
+      border: none;
+      padding: 12px 15px;
+      font-size: 20px;
+      font-weight: 500;
+      white-space: nowrap;
+      text-align: center;
+      font-weight: bold;
+    }
+    table.dataTable tbody {
+      background: transparent;
+    }
+    table.dataTable tbody tr {
+      background-color: #ffffff;
+      border-radius: 8px;
+      width: auto;
+      font-size: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      transition: background-color 0.3s ease;
+      margin-bottom: 10px;
+      white-space: nowrap;
+    }
+    table.dataTable tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+    table.dataTable tbody td {
+  padding: 12px 15px;
+  border: none;
+  vertical-align: middle;
+  text-align: center;
+  font-weight: 600;
+  font-family: 'Verdana', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+    /* Limit the width of the Bairro column and add ellipsis for overflow */
+    table.dataTable tbody td.bairro-column {
+      max-width: 150px; /* Adjust the width as needed */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    /* Add scrolling animation for the text inside the cell */
+    table.dataTable tbody td.bairro-column:hover span {
+      display: inline-block;
+      animation: scrollText 3.5s linear infinite;
+    }
+
+    table.dataTable tbody td.bairro-column span {
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    @keyframes scrollText {
+      0% {
+        transform: translateX(0%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    /* DataTables Filtros customizados */
+    .dataTables_wrapper .dataTables_filter input {
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      padding: 5px;
+      margin-left: 5px;
+      display: none;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      background-color: #001933 !important;
+      color: #fff !important;
+      border: none;
+      border-radius: 5px;
+      margin: 0 2px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background-color: #001933 !important;
+    }
+    .container {
+      max-width: 95%; /* Reduz a largura máxima para ocupar mais espaço horizontal */
+      padding-left: 10px; /* Reduz o padding lateral */
+      padding-right: 10px; /* Reduz o padding lateral */
+    }
+    .searchable-dropdown {
+      font-size: 20px;
+      position: relative;
+    }
+    .searchable-dropdown input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+    .dropdown-list {
+      position: absolute;
+      z-index: 1000;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      width: 100%;
+      display: none;
+      font-size: 20px;
+      font-weight: bold;
+      padding-left: 5px;
+    }
+    .dropdown-list.active {
+      display: block;
+    }
+    .dropdown-list div {
+      padding: 10px;
+      cursor: pointer;
+    }
+    .dropdown-list div:hover {
+      background-color: #f1f1f1;
+    }
+    /* Add styles for checkboxes in dropdown */
+    .dropdown-list div {
+      display: flex;
+      align-items: center;
+    }
+    .dropdown-list input {
+      margin-right: 1px;
+    }
+    /* Adjust alignment for checkboxes and text in dropdown */
+    .dropdown-list div {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start; /* Align items to the left */
+      padding-left: 5px; /* Add some padding to the left */
+    }
+    .dropdown-list input {
+      margin-right: 1px;
+    }
+    /* Adjust spacing for checkboxes in dropdown */
+    .dropdown-list div {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2px 1px; /* Reduce padding for compact layout */
+    }
+    .dropdown-list input[type="checkbox"] {
+      margin-right: 5px; /* Reduce spacing between checkbox and label */
+    }
+    /* Dashboard card styles */
+    .dashboard {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+
+    }
+    .dashboard-card {
+      flex: 1;
+      margin: 0 10px;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      color: #fff;
+      font-size: 30px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .dashboard-card.total {
+      background-color: #007bff;
+    }
+    .dashboard-card.red {
+      background-color: #f23838;
+    }
+    .dashboard-card.yellow {
+      background-color: #f2d338;
+    }
+    .dashboard-card.green {
+      background-color: #47ab29;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+    .dashboard-card:active {
+      transform: translateY(10);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    /* Adjust button styles */
+    .search-card .btn {
+      height: 50px; /* Alinha com a altura dos campos de filtro */
+      font-size: 0.9rem; /* Ajusta o tamanho da fonte */
+      padding: 0 15px; /* Reduz o padding interno */
+      border-radius: 5px; /* Bordas arredondadas */
+      width: 100%; /* Garante que ocupe o espaço da coluna */
+    }
+
+    .filter-item {
+  padding: 5px;
+  cursor: pointer;
+}
+.filter-item.selected {
+  background-color: #e0e0e0;
+}
+
+/* Estilos para o modal */
+.modal-overlay {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.4);
+z-index: 9999;
+align-items: center;
+justify-content: center;
+}
+
+/* Estilos otimizados para o modal */
+.modal-container {
+background: #fff;
+border-radius: 10px;
+padding: 20px;
+width: 90%; /* Ajusta largura para responsividade */
+max-width: 800px; /* Define um limite máximo */
+height: 1600; /* Ajusta altura automaticamente */
+max-height: 120%; /* Limita a altura máxima */
+box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+overflow-y: auto; /* Adiciona rolagem para conteúdo longo */
+position: relative;
+zoom: 150%;
+font-weight: 700;
+}
+
+.close-modal-btn {
+position: absolute;
+top: 10px;
+right: 10px;
+border: none;
+background: none;
+font-size: 1.5rem; /* Reduz tamanho do botão */
+cursor: pointer;
+}
+
+@media (max-width: 768px) {
+.modal-container {
+  width: 95%; /* Ajusta largura para telas menores */
+  padding: 15px; /* Reduz padding */
+}
+
+.close-modal-btn {
+  font-size: 1.25rem; /* Ajusta tamanho do botão */
+}
+}
+
+.modal-title {
+margin-bottom: 20px;
+}
+
+.modal-msg {
+color: green;
+display: none;
+margin-top: 20px;
+}
+
+.filter-popup {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  min-width: 200px;
+  border-radius: 6px;
+}
+.filter-sort button { margin-right: 5px; }
+.color-dot {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  margin-right: 6px;
+  border: 2px solid #fff;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.color-dot.selected { border: 2px solid #333; }
+
+#filterContainer {
+  position: absolute;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: none;
+  min-width: 260px;
+  max-width: 350px;
+  border-radius: 10px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+  zoom: 190%;
+}
+
+#filterContainer .color-dot {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 2px solid #fff;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: border 0.2s;
+}
+#filterContainer .color-dot.selected {
+  border: 2px solid #333;
+  box-shadow: 0 0 0 2px #bbb;
+}
+
+#filterContainer .color-dot[data-color="darkgreen"] {
+  background: #006400 !important;
+}
+#filterContainer .color-dot[data-color="lightgreen"] {
+  background: #90ee90 !important;
+}
+#filterContainer .color-dot[data-color="orange"] {
+  background: #ffa500 !important;
+}
+#filterContainer .color-dot[data-color="red"] {
+  background: #ff0000 !important;
+}
+
+#filterContainer .filter-sort button {
+  margin-right: 5px;
+  margin-bottom: 2px;
+}
+
+#filterContainer .close-popup {
+  font-size: 1.2rem;
+  padding: 0 8px;
+  line-height: 1;
+  border-radius: 50%;
+  border: none;
+  background: #eee;
+  color: #333;
+  transition: background 0.2s;
+}
+#filterContainer .close-popup:hover {
+  background: #d5d5d5;
+}
+
+#filterContainer .filter-options {
+  background: #fafbfc;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 6px;
+  max-height: 180px;
+  overflow: auto;
+  margin-bottom: 8px;
+}
+
+#filterContainer .apply-filter,
+#filterContainer .clear-filter {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+#filterContainer hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 8px 0;
+}
+
+#oltTable thead th.sorting::after,
+#oltTable thead th.sorting_asc::after,
+#oltTable thead th.sorting_desc::after {
+  display: none !important;
+}
+
+#oltTable thead th.sorting,
+#oltTable thead th.sorting_asc,
+#oltTable thead th.sorting_desc {
+  cursor: default !important;
+}

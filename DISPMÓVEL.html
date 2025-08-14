@@ -1,0 +1,2450 @@
+
+
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/ico" href="rede.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disponibilidade Móvel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+</head>
+<body>
+  <div id="userModal" style="display:none;position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:32px 28px;border-radius:12px;min-width:340px;box-shadow:0 4px 24px #0002;position:relative;">
+      <h4 style="margin-bottom:18px;">Identificação do Usuário</h4>
+      <form id="userForm" autocomplete="off">
+        <div class="mb-2">
+          <label>Nome</label>
+          <input type="text" id="userNome" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label>Número</label>
+          <input type="text" id="userNumero" class="form-control" required pattern="^[0-9()+\- ]{8,}$" title="Digite um número válido">
+        </div>
+        <div class="mb-2">
+          <label>Email</label>
+          <input type="email" id="userEmail" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label>Empresa</label>
+          <select id="userEmpresa" class="form-select" required>
+            <option value="" disabled selected>Selecione</option>
+            <option value="VIVO">VIVO</option>
+            <option value="ABILITY">ABILITY</option>
+            <option value="TEL">TEL</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-2">Salvar</button>
+      </form>
+    </div>
+  </div>
+
+  <section class="hero-vivo" style="position: relative;">
+    <div class="hero-overlay"></div>
+    <div class="hero-content text-center my-4">
+      <h1>Dashboard Disponibilidade - Móvel</h1>
+    </div>
+  
+    <!-- Indicador de atualização -->
+    <div id="updateInfo" style="
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      font-size: 1.7em;
+      color: #fff;
+      background-color: rgba(140, 0, 255, 0.5);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    "></div>
+  </section>
+
+  <div class="container" style="margin-left: 50px; margin-right: -15px;">
+    <div class="dashboard d-flex justify-content-between mb-4">
+      <div class="dashboard-card total bg-primary text-white p-3 rounded" id="totalSitesCard">Total de Sites: 0</div>
+      <div class="dashboard-card bg-secondary text-white p-3 rounded" id="sitesBairroCard">Total Sites Bairro: 0</div>
+      <div class="dashboard-card red bg-danger text-white p-3 rounded" id="criticalSitesCard">Sites Críticos: 0</div>
+      <div class="dashboard-card yellow bg-warning text-white p-3 rounded" id="alertSitesCard">Sites em Alerta: 0</div>
+      <div class="dashboard-card green bg-success text-white p-3 rounded" id="nonCriticalSitesCard">Sites Não Críticos: 0</div>
+    </div>
+
+    <div class="d-flex justify-content-center mb-4">
+      <div>
+        <button id="abiBtn" class="btn btn-outline-info mx-2" style="font-size:22px;font-weight:600;">ABI</button>
+        <button id="telBtn" class="btn btn-outline-dark mx-2" style="font-size:22px;font-weight:600;">TEL</button>
+        <button id="spiBtn" class="btn btn-outline-dark mx-2" style="font-size:22px;font-weight:600;">SPI</button>
+      </div>
+      <div>
+        <button id="huntersBtn" class="btn btn-outline-warning mx-2" style="font-size:22px;font-weight:600;">HUNTERS</button>
+        <button id="cidadesBtn" class="btn btn-outline-primary mx-2" style="font-size:22px;font-weight:600;">TABELA ESPECIAIS</button>
+        <button id="evolucaoBtn" class="btn btn-outline-danger mx-2" style="font-size:22px;font-weight:600;">Dashboard Evolução</button>
+
+      </div>
+    </div>
+
+    <div class="search-card p-3 bg-none position-relative">
+      <div class="row g-2 justify-content-end align-items-center">
+        <div class="col-auto">
+          <button id="clearFilters" class="btn btn-secondary export-btn" style="font-size:25px;font-weight:450;">Limpar</button>
+        </div>
+        <div class="col-auto">
+          <button id="exportExcel" class="btn btn-success export-btn" style="font-size:25px;font-weight:450;">Exportar</button>
+        </div>
+        <div class="col-auto">
+          <button id="exportCausas" class="btn btn-info export-btn" style="font-size:25px;font-weight:450;">Exportar Causas</button>
+        </div>
+        <div class="col-auto">
+          <button id="exportCausasDiario" class="btn btn-warning export-btn" style="font-size:25px;font-weight:450;">Exportar Causas Diário</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="evolucaoContainer" style="display:none;">
+      <div class="p-4 shadow-sm rounded h-100" style="background: #cacaca;">
+       
+        <div class="dashboard d-flex flex-wrap justify-content-between gap-3 mb-4">
+          <div class="card-container">
+            <div class="dashboard-card bg-danger text-white p-3 rounded flex-grow-1" id="cardCriticosHoje" data-legend="Sites que estão críticos no momento.">Críticos Hoje: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-dark text-white p-3 rounded flex-grow-1" id="cardSegueCritico" data-legend="Sites com dois meses passados ruins no trimestre atual.">Segue Crítico: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-secondary text-white p-3 rounded flex-grow-1" id="cardCritico" data-legend="Sites com um mês passado <96 e o atual <94">Crítico: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-warning text-dark p-3 rounded flex-grow-1" id="cardPodeSair" data-legend="Sites com um mês passado <96 e atualmente entre 94 e 96">Pode Sair: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-info text-white p-3 rounded flex-grow-1" id="cardPodeVirarCritico" data-legend="Sites com do trimestre <96 e atualmente entre 96 e 96.5">Pode Virar Crítico: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-primary text-white p-3 rounded flex-grow-1" id="cardProjetado">Projetado: 0</div>
+          </div>
+        </div>
+        <div class="dashboard d-flex flex-wrap justify-content-between gap-3 mb-4">
+          <div class="card-container">
+            <div class="dashboard-card bg-info text-white p-3 rounded flex-grow-1" id="cardRetrasadoAbaixo96" data-legend="Sites que mês retrasado estavam <96">Retrasado &lt;96: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-primary text-white p-3 rounded flex-grow-1" id="cardRetrasadoSaiuVoltou" data-legend="Sites do mês retrasado <96 com incidencia <96 no mês atual">Retrasado&lt;96 &rarr; Passado&gt;96 &rarr; Atual&lt;96: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-info text-white p-3 rounded flex-grow-1" id="cardPassadoAbaixo96" data-legend="Sites que mês passado estavam <96">Passado &lt;96: 0</div>
+          </div>
+          <div class="card-container">
+            <div class="dashboard-card bg-primary text-white p-3 rounded flex-grow-1" id="cardPassadoSaiuVoltou" data-legend="Sites do mês passado <96 com incidencia <96 no mês atual">Passado&lt;96 &amp; Retrasado&gt;96 &amp; Atual&lt;96: 0</div>
+          </div>
+        </div>
+ 
+   <h6 class="mb-25 text-center" style="font-size: 35px;">📊 Qtd Sites Críticos Histórico Mensal</h6>
+        <div style="display: flex; gap: 0px; justify-content: center; align-items: flex-start;">
+          <canvas id="graficoCriticosHistorico" width="3400" height="800"></canvas>
+        </div>
+         
+        <br><br><br><br>
+
+ 
+     
+        <h6 class="mb-25 text-center" style="font-size: 35px;">📊 Qtd Sites Criticos (Dia)</h6>
+        <div style="display: flex; gap: 0px; justify-content: center; align-items: flex-start;">
+          <canvas id="graficoEvolucao" width="3400" height="800"></canvas>
+        </div>
+      </div>
+    </div>
+    
+
+    <div class="table-container bg-white rounded shadow-sm p-3 overflow-auto mt-3" id="cidadesTableContainer" style="display:none;">
+      <table id="cidadesTable" class="table table-striped table-bordered nowrap" style="width:100%">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+
+    <div class="table-container bg-white rounded shadow-sm p-3 overflow-auto mt-3">
+      <table id="oltTable" class="table table-striped table-bordered nowrap" style="width:100%">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+      <div id="filterContainer"></div>
+    </div>
+  </div>
+
+
+<div id="editModal" class="modal-overlay">
+  <div class="modal-container">
+    <button id="closeModalBtn" class="close-modal-btn">&times;</button>
+    <h4 id="modalTitle" class="modal-title">Editar Informação</h4>
+    <form id="editForm">
+
+
+      <div class="mb-2" style="display:flex;align-items:center;gap:12px;">
+        <label class="form-label" style="margin-bottom:0;">Status do Site:</label>
+        <div style="display:flex;align-items:center;">
+          <span id="okNokLabel" style="font-weight:bold;color:#337031;">OK</span>
+          <label class="switch" style="margin:0 8px;">
+            <input type="checkbox" id="okNokSwitch" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+
+
+<div class="mb-2">
+  <label class="form-label">⚠️ Causa 1</label>
+  <select class="form-select" id="causaInput1">
+    <option value="" disabled selected>Selecione uma causa</option>
+    <option value="Rede Externa">Rede Externa</option>
+    <option value="Vandalismo">Vandalismo</option>
+    <option value="RF">RF</option>
+    <option value="Energia AC">Energia AC</option>
+    <option value="Infraestrutura">Infraestrutura</option>
+    <option value="Equipamento">Equipamento</option>
+    <option value="Transmissão">Transmissão</option>
+    <option value="Software">Software</option>
+    <option value="Implantação">Implantação</option>
+    <option value="Desmobilizado">Desmobilizado</option>
+    <option value="Outro">Outro</option>
+  </select>
+  <textarea class="form-control mt-2 auto-resize" id="causaOutro1" placeholder="Descreva a causa" style="display:none;" rows="1"></textarea>
+  <label class="form-label">✅ Ação Realizada 1</label>
+  <textarea class="form-control auto-resize" id="solucaoInput1" rows="1"></textarea>
+</div><br>
+
+
+<div class="mb-2">
+  <label class="form-label">⚠️ Causa 2</label>
+  <select class="form-select" id="causaInput2">
+    <option value="" disabled selected>Selecione uma causa</option>
+    <option value="Rede Externa">Rede Externa</option>
+    <option value="Vandalismo">Vandalismo</option>
+    <option value="RF">RF</option>
+    <option value="Energia AC">Energia AC</option>
+    <option value="Infraestrutura">Infraestrutura</option>
+    <option value="Equipamento">Equipamento</option>
+    <option value="Transmissão">Transmissão</option>
+    <option value="Software">Software</option>
+    <option value="Implantação">Implantação</option>
+    <option value="Desmobilizado">Desmobilizado</option>
+    <option value="Outro">Outro</option>
+  </select>
+  <textarea class="form-control mt-2 auto-resize" id="causaOutro2" placeholder="Descreva a causa" style="display:none;" rows="1"></textarea>
+  <label class="form-label">✅ Ação Realizada 2</label>
+  <textarea class="form-control auto-resize" id="solucaoInput2" rows="1"></textarea>
+</div><br>
+
+<div class="mb-2">
+  <label class="form-label">⚠️ Causa 3</label>
+  <select class="form-select" id="causaInput3">
+    <option value="" disabled selected>Selecione uma causa</option>
+    <option value="Rede Externa">Rede Externa</option>
+    <option value="Vandalismo">Vandalismo</option>
+    <option value="RF">RF</option>
+    <option value="Energia AC">Energia AC</option>
+    <option value="Infraestrutura">Infraestrutura</option>
+    <option value="Equipamento">Equipamento</option>
+    <option value="Transmissão">Transmissão</option>
+    <option value="Software">Software</option>
+    <option value="Implantação">Implantação</option>
+    <option value="Desmobilizado">Desmobilizado</option>
+    <option value="Outro">Outro</option>
+  </select>
+  <textarea class="form-control mt-2 auto-resize" id="causaOutro3" placeholder="Descreva a causa" style="display:none;" rows="1"></textarea>
+  <label class="form-label">✅ Ação Realizada 3</label>
+  <textarea class="form-control auto-resize" id="solucaoInput3" rows="1"></textarea>
+</div>
+
+<div class="mb-2">
+  <label class="form-label">🧑‍💼 Responsável</label>
+  <textarea class="form-control auto-resize" id="responsavelInput" rows="1"></textarea>
+</div>
+      <button type="button" id="editBtn" class="btn btn-secondary w-100 mt-2">Editar</button>
+      <button type="submit" class="btn btn-primary w-100 mt-2">Salvar</button>
+    </form>
+    <div id="modalMsg" class="modal-msg">Salvo!</div>
+  </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<script>
+  window.externals = {
+    dadosJson: "https://grupotel-web.github.io/RElTUExPVkVMA/dados2.json",
+    sitesJson: "https://grupotel-web.github.io/RElTUExPVkVMA/sites.json",
+    muniespecialJson: "https://grupotel-web.github.io/RElTUExPVkVMA/muniespecial.json",
+    firebaseConfig: {
+      apiKey: "AIzaSyC0WOkW73igO0B2LFVKDJr7uveWPf4d4Uk",
+      authDomain: "database-dispmovel.firebaseapp.com",
+      databaseURL: "https://database-dispmovel-default-rtdb.firebaseio.com",
+      projectId: "database-dispmovel",
+      storageBucket: "database-dispmovel.firebasestorage.app",
+      messagingSenderId: "245395632820",
+      appId: "1:245395632820:web:2f1068109246d5d9541de1",
+      measurementId: "G-2C1X826GKM"
+    }
+  };
+</script>
+<script>
+    let dadosDisponibilidade = [];
+    let dadosSitesBairro = [];
+    let currentMonths = [];
+    let table;
+    let filtroDddPorBotao = false;
+    let hunterActive = false;
+    let headCols = [];
+    let cidadesData = [];
+    let criticosHoje = [];
+    let colAnterior, colRetrasado, colAtual, colCriticidadeAtual;
+    let podeVirarCritico = 0;
+    let filtroDddEvolucao = null;
+
+
+ 
+    function renderGraficoCriticosHistorico() {
+  const labels = [
+    'NOV/DEZ/JAN',
+    'DEZ/JAN/FEV',
+    'JAN/FEV/MAR',
+    'FEV/MAR/ABR',
+    'MAR/ABR/MAI',
+    'ABR/MAI/JUN',
+    'MAI/JUN/JUL'
+  ];
+ 
+  const dadosBairros = [39, 41, 34, 28, 15, 13, 11]; // FIXO - Qtd Bairros
+  const dadosSites =   [50, 58, 50, 39, 19, 19, 18]; 
+  const ctx = document.getElementById('graficoCriticosHistorico').getContext('2d');
+  if (window.chartCriticosHistorico) window.chartCriticosHistorico.destroy();
+ 
+  const corSite = '#dc3545';   // Vermelho
+  const corBairro = 'orange';  // Laranja
+  const textColor = '#333';
+ 
+  window.chartCriticosHistorico = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Sites Críticos',
+          data: dadosSites,
+          borderColor: corSite,
+          backgroundColor: 'rgba(220,53,69,0.1)',
+          borderWidth: 8,
+          pointRadius: 10,
+          pointBackgroundColor: corSite,
+          fill: false,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Bairros Críticos',
+          data: dadosBairros,
+          borderColor: corBairro,
+          backgroundColor: 'rgba(255,165,0,0.1)',
+          borderWidth: 8,
+          pointRadius: 10,
+          pointBackgroundColor: corBairro,
+          fill: false,
+          yAxisID: 'y'
+        }
+      ]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      animation: false,
+      hover: { mode: null },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            color: textColor,
+            boxWidth: 12,
+            padding: 15,
+            font: { size: 25, weight: 'bold' }
+          },
+          onClick: (e, legendItem, legend) => {
+            const index = legendItem.datasetIndex;
+            const chart = legend.chart;
+            const meta = chart.getDatasetMeta(index);
+            meta.hidden = meta.hidden === null
+? !chart.data.datasets[index].hidden
+              : null;
+            chart.update();
+          }
+        },
+        tooltip: { enabled: false },
+        datalabels: {
+          color: textColor,
+          font: { weight: 'bold', size: 30 },
+          anchor: 'end',
+          align: function(context) {
+            return context.datasetIndex === 0 ? 'top' : 'bottom';
+          },
+          formatter: value => value
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: textColor,
+            maxRotation: 0,
+            minRotation: 0,
+            font: { size: 30, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { display: false },
+          grid: { color: '#eee' },
+          suggestedMax: Math.max(...dadosSites.concat(dadosBairros), 1) * 1.5
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+ 
+ 
+ 
+ 
+
+    function isSiteBairro(site) {
+  const siteKey = String(site || '').trim().toUpperCase();
+  const extra = window.siteExtraMap[siteKey];
+  const qtd = parseInt(extra?.['Qtd Bairro'] || 0);
+  const parque = parseInt(extra?.['Parque'] || 0);
+  return qtd > 3 && parque >= 20000;
+}
+
+
+    function getCriticalColor(percent, max) {
+  // percent: 0 (verde) a max (vermelho)
+  // Verde: #27ae60 (39,174,96), Vermelho: #e74c3c (231,76,60)
+  const p = Math.max(0, Math.min(max, percent));
+  const ratio = max > 0 ? p / max : 0;
+  const r = Math.round(39 + (231 - 39) * ratio);
+  const g = Math.round(174 + (76 - 174) * ratio);
+  const b = Math.round(96 + (60 - 96) * ratio);
+  return `rgb(${r},${g},${b})`;
+}
+
+async function renderCidadesTable(dddFilter = null, exceto = false) {
+  if (!cidadesData.length) return;
+
+  const keys = Object.keys(cidadesData[0]);
+  const meses = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  const mesKeys = keys.filter(k => meses.includes(k));
+  const mesAnterior = mesKeys[mesKeys.length - 2];
+  const mesAtual = mesKeys[mesKeys.length - 1];
+
+  const percentuais = ['% Alerta', '% Pontual', '% Crítico'];
+
+  // Cores fortes
+  const green = '#2e7d32';
+  const red = '#c62828';
+  const yellow = '#f9a825';
+
+  let cidadeToDDD = {};
+  const res = await fetch(window.externals.sitesJson);
+  const json = await res.json();
+
+  json.forEach(site => {
+    if (site.CIDADES && site.DDD) {
+      cidadeToDDD[String(site.CIDADES).trim().toUpperCase()] = String(site.DDD).trim();
+    }
+  });
+
+  let filtered = cidadesData;
+  if (dddFilter !== null) {
+    filtered = cidadesData.filter(row => {
+      const cidade = (row.CIDADES || '').toUpperCase();
+      if (exceto) return cidadeToDDD[cidade] && cidadeToDDD[cidade] !== dddFilter;
+      return cidadeToDDD[cidade] === dddFilter;
+    });
+  }
+
+  const critIdx = keys.indexOf('% Crítico');
+  let maxCrit = 0;
+  filtered.forEach(row => {
+    let val = row['% Crítico'] || '';
+    if (typeof val === 'string' && val.includes('%')) {
+      const num = parseFloat(val.replace('%', '').replace(',', '.'));
+      if (!isNaN(num) && num > maxCrit) maxCrit = num;
+    }
+  });
+
+  let thead = '<tr>' + keys.map(k => `<th>${k}</th>`).join('') + '</tr>';
+  let tbody = filtered.map(row => {
+    return '<tr>' + keys.map((k) => {
+      let val = row[k];
+      let style = '';
+      let fontSize = '';
+
+      // Comparação entre mês atual e anterior
+      if (k === mesAtual) {
+        let valAnterior = row[mesAnterior] || '';
+        let valAtual = val || '';
+        let numAnterior = parseFloat(valAnterior.replace('%', '').replace(',', '.')) || 0;
+        let numAtual = parseFloat(valAtual.replace('%', '').replace(',', '.')) || 0;
+        let arrow = '';
+        let bgColor = '';
+        let color = '#fff';
+
+        if ((valAtual === '' || valAtual == null) && numAnterior > 0) {
+          return `<td style="background:${green};color:#fff;"></td>`;
+        }
+
+        if (valAtual === '' || valAtual == null) {
+          return `<td></td>`;
+        }
+
+        if (numAtual > numAnterior) {
+          arrow = ' <span style="color:#fff;font-size:1.2em;">▲</span>';
+          bgColor = red;
+        } else if (numAtual < numAnterior && numAtual > 0) {
+          arrow = ' <span style="color:#fff;font-size:1.2em;">▼</span>';
+          bgColor = green;
+        } else if (numAtual < numAnterior && numAtual === 0) {
+          return `<td style="background:${green};color:#fff;"></td>`;
+        } else if (numAtual === numAnterior && numAtual > 0) {
+          arrow = ' <span style="color:#fff;font-size:1.2em;">=</span>';
+          bgColor = yellow;
+        }
+
+        style = `style="color:${color}; background:${bgColor}; font-size:1.1em;"`;
+        return `<td ${style}>${val}${arrow}</td>`;
+      }
+
+      // Lógica original para % Crítico
+      if (k === '% Crítico') {
+        if (val === '' || val == null) {
+          return `<td></td>`;
+        }
+        const num = parseFloat(val.replace('%', '').replace(',', '.'));
+        const bg = getCriticalColor(num, maxCrit);
+        return `<td style="background:${bg};color:#fff;font-size:1.1em;">${val}</td>`;
+      }
+
+      // Preenche vazio com "0%" cinza nas colunas de % Alerta e % Pontual
+      if (percentuais.includes(k)) {
+        if (val === '' || val == null) {
+          return `<td></td>`;
+        } else {
+          return `<td style="font-size:1.1em;">${val}</td>`;
+        }
+      }
+
+      // Aplica cinza claro para "0%" nas colunas de mês que não são o mês atual
+      if (mesKeys.includes(k) && val === '0%' && k !== mesAtual) {
+        return `<td style="color:#999;">${val}</td>`;
+      }
+
+      // Destaca valores diferentes de "0%" com fonte maior
+      if (typeof val === 'string' && val.includes('%') && val !== '0%') {
+        return `<td style="font-size:1.1em;">${val}</td>`;
+      }
+
+      return `<td>${val || ''}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+
+  $('#cidadesTable thead').html(thead);
+  $('#cidadesTable tbody').html(tbody);
+}
+
+
+
+fetch(window.externals.muniespecialJson)
+  .then(res => res.json())
+  .then(json => { cidadesData = json; });
+
+$('#cidadesBtn').on('click', function () {
+  const isCidadesVisible = $('#cidadesTableContainer').is(':visible');
+  if (isCidadesVisible) {
+    $('#cidadesTableContainer').hide();
+    $('#oltTable').closest('.table-container').show();
+  } else {
+    renderCidadesTable();
+    $('#oltTable').closest('.table-container').hide();
+    $('#cidadesTableContainer').show();
+  }
+});
+
+
+
+    function startDashboard() {
+  localStorage.removeItem('dadosDisponibilidade');
+  localStorage.removeItem('dadosDisponibilidade_timestamp');
+  localStorage.removeItem('dadosSitesBairro');
+  localStorage.removeItem('dadosSitesBairro_timestamp');
+
+  Promise.all([
+  fetch(window.externals.dadosJson).then(res => res.json()).then(d => dadosDisponibilidade = d),
+  fetch(window.externals.sitesJson).then(res => res.json()).then(d => dadosSitesBairro = d)
+]).then(() => {
+    window.siteExtraMap = {};
+    dadosSitesBairro.forEach(site => {
+      if (site.Site) {
+        const key = String(site.Site).trim().toUpperCase();
+        window.siteExtraMap[key] = site;
+      }
+    });
+
+    // FILTRO POR EMPRESA
+    const empresa = localStorage.getItem("empresaUsuario");
+    if (empresa === "ABILITY") {
+      dadosDisponibilidade = dadosDisponibilidade.filter(item => String(item.DDD).trim() === "11");
+      dadosSitesBairro = dadosSitesBairro.filter(item => String(item.DDD).trim() === "11");
+    } else if (empresa === "TEL") {
+      dadosDisponibilidade = dadosDisponibilidade.filter(item => String(item.DDD).trim() !== "11");
+      dadosSitesBairro = dadosSitesBairro.filter(item => String(item.DDD).trim() !== "11");
+    }
+    // VIVO vê tudo
+    renderDashboardEvolucao();
+    renderGraficoCriticosHistorico();
+    initializeTable();
+    setupFilters();
+    setupActions();
+    setupAdvancedFilters();
+    }).catch(err => console.error(err));
+}
+
+
+
+function salvarCriticosDiario() {
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const ano = hoje.getFullYear();
+  const dataStr = `${dia}-${mes}-${ano}`;
+ 
+const mesAtual = currentMonths.at(-1);
+  const crit2ColName = headCols.find(c =>
+    c.toLowerCase().includes('criticidade') &&
+    c.toLowerCase().includes((mesAtual || '').toLowerCase())
+  );
+ 
+  let totalCriticos = 0;
+  const bairrosCriticos = new Set();
+ 
+  dadosDisponibilidade.forEach(item => {
+const siteKey = String(item.SITE || '').trim().toUpperCase();
+    const extra = window.siteExtraMap[siteKey];
+    const bairro = extra?.['Bairros']?.toString().trim().toUpperCase();
+    const qtd = parseInt(extra?.['Qtd Bairro'] || 0);
+    const parque = parseInt(extra?.['Parque'] || 0);
+    const criticidade = item[crit2ColName];
+ 
+    const isSiteBairro = qtd > 3 && parque >= 20000;
+ 
+    // Contar site crítico independentemente do status do bairro
+    if (isSiteBairro && criticidade === 'Crítico') {
+      totalCriticos++;
+    }
+ 
+    // Recalcular status do bairro separadamente
+    if (bairro) {
+      let criticos = 0;
+      let total = 0;
+ 
+      dadosDisponibilidade.forEach(other => {
+const otherSite = String(other.SITE || '').trim().toUpperCase();
+        const otherExtra = window.siteExtraMap[otherSite];
+        const otherBairro = otherExtra?.['Bairros']?.toString().trim().toUpperCase();
+        const otherQtd = Number(otherExtra?.['Qtd Bairro'] || 0);
+        const otherParque = Number(otherExtra?.['Parque'] || 0);
+        const otherCrit = other[crit2ColName];
+ 
+        const isValido = otherQtd > 3 && otherParque >= 20000;
+ 
+        if (otherBairro === bairro && isValido) {
+          total++;
+          if (otherCrit === 'Crítico') criticos++;
+        }
+      });
+ 
+      const percCrit = total ? (criticos / total) * 100 : 0;
+      if (percCrit >= 10) {
+        bairrosCriticos.add(bairro);
+      }
+    }
+  });
+ 
+  const dataObj = {
+    criticos: totalCriticos, // ex: 18 sites
+    bairros: bairrosCriticos.size // ex: 15 bairros
+  };
+ 
+  console.log(`✔️ Sites críticos válidos: ${totalCriticos}`);
+  console.log(`✔️ Bairros críticos únicos: ${[...bairrosCriticos]}`);
+ 
+  db.ref('mensal/' + dataStr).set(dataObj);
+  db.ref('mensalMes').update({ [(crit2ColName || '').replace(/^.*\s/, '')]: totalCriticos });
+}
+window.salvarCriticosDiario = salvarCriticosDiario;
+
+
+    function formatCell(value, rowIdx, colKey, colDisplay, site) {
+  if (value == null || value === '') return `<td class="date-cell" data-row="${rowIdx}" data-colkey="${colKey}" data-coldisplay="${colDisplay}" data-site="${site}" style="cursor:pointer;"></td>`;
+
+  const n = parseFloat(value.toString().replace(',', '.'));
+  let bg = '', color = ''; 
+  if (n === 100) {
+    bg = '#337031'; color = '#fff';
+  } else if (n > 98) {
+    bg = '#00b050'; color = '#fff';
+  } else if (n > 96) {
+    bg = '#ffff00'; color = '#000';
+  } else {
+    bg = '#ff0000'; color = '#fff';
+  }
+
+  const disp = (n === 100 || n === 0) ? String(n) : n.toFixed(2).replace('.', ',');
+
+  return `<td class="date-cell" style="background-color:${bg}; color:${color}; cursor:pointer;" data-order="${n}" data-row="${rowIdx}" data-colkey="${colKey}" data-coldisplay="${colDisplay}" data-site="${site}">${disp}</td>`;
+}
+
+    function getDynamicMonthHeaders(data) {
+      const valid = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const keys = Object.keys(data[0] || {}).filter(k => valid.includes(k));
+      const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      keys.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+      const monthMap = {
+  Jan: 'Jan',
+  Feb: 'Feb',
+  Mar: 'Mar',
+  Apr: 'Apr',
+  May: 'May',
+  Jun: 'Jun',
+  Jul: 'Jul',
+  Aug: 'Aug',
+  Sep: 'Sep',
+  Oct: 'Oct',
+  Nov: 'Nov',
+  Dec: 'Dez'
+};
+
+return keys.map(m => {
+  if (!currentMonths.includes(m)) currentMonths.push(m);
+  return { key: m, display: monthMap[m] || m };
+});
+
+    }
+    function calculateColumns(item, monthHeaders) {
+  const pv = v => v == null || v === '' ? null : parseFloat(v.toString().replace(',', '.'));
+
+  const recentKeys = monthHeaders.slice(-4).map(h => h.key); 
+  const recentVals = recentKeys.map(k => pv(item[k])).filter(v => v != null);
+
+  const getCrit = trio => {
+    const below96 = trio.map(v => v != null && v < 96 ? 1 : 0);
+    const count = below96.reduce((a, b) => a + b, 0);
+    if (count >= 2) return 'Crítico';
+    if (count === 1 && below96[2] === 1) return 'Alerta';
+    return 'Não Crítico';
+  };
+
+  const critical1 = getCrit(recentVals.slice(0, 3)); 
+  const critical2 = getCrit(recentVals.slice(1));    
+
+  return { critical1, critical2 };
+}
+
+
+const municipiosHunter = [
+  "CAMPINAS",
+  "RIBEIRÃO PRETO",
+  "SÃO JOSÉ DOS CAMPOS",
+  "SOROCABA",
+  "SÃO JOSÉ DO RIO PRETO",
+  "BAURU",
+  "JUNDIAÍ",
+  "PIRACICABA",
+  "FRANCA",
+  "PRESIDENTE PRUDENTE",
+  "VINHEDO",
+  "VALINHOS",
+  "ITU",
+  "SÃO ROQUE",
+  "ITATIBA",
+  "BRAGANÇA PAULISTA",
+  "ATIBAIA",
+  "ARAÇOIABA DA SERRA",
+  "ARARAQUARA",
+  "TAUBATÉ",
+  "SÃO CARLOS",
+  "INDAIATUBA",
+  "AMERICANA",
+  "OSASCO",
+  "COTIA",
+  "BARUERI",
+  "SANTANA DE PARNAÍBA"
+];
+
+function applyHunterFilter() {
+  if (!table) return;
+  $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f => !f._hunter); // Remove filtro hunter antigo
+
+  if (hunterActive) {
+    const hunterSet = new Set(municipiosHunter.map(m => m.toUpperCase()));
+    const muniIdx = headCols.findIndex(c => c === 'MUNICIPIO');
+    const hunterFilter = function(settings, data, dataIndex) {
+      const cell = table.cell(dataIndex, muniIdx).node();
+      const municipio = $(cell).data('municipio') || '';
+      return hunterSet.has(String(municipio).trim().toUpperCase());
+    };
+    hunterFilter._hunter = true;
+    $.fn.dataTable.ext.search.push(hunterFilter);
+  }
+  table.draw();
+}
+
+function setupHunterButton() {
+  $('#huntersBtn').off('click').on('click', function () {
+    hunterActive = !hunterActive;
+    $(this).toggleClass('selected-btn-hunter', hunterActive);
+    applyHunterFilter();
+  });
+}
+
+function initializeTable() {
+  const today = new Date();
+  const dateHeaders = [];
+  for (let i = 7; i >= 1; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    dateHeaders.push({ key: `${dd}/${mm}/${d.getFullYear()}`, display: `Disp. ${dd}/${mm}` });
+  }
+  const monthHeaders = getDynamicMonthHeaders(dadosDisponibilidade);
+  const lastMonths = monthHeaders.slice(-2);
+
+  dadosDisponibilidade = dadosDisponibilidade.map(item => {
+    const cols = calculateColumns(item, monthHeaders);
+    let projMedia = item['PROJECAO_MEDIA'];
+    if (projMedia === '' || projMedia === 0 || projMedia === '0') projMedia = '100';
+    return { ...item,
+      [`Criticidade ${lastMonths[0].display}`]: cols.critical1,
+      [`Criticidade ${lastMonths[1].display}`]: cols.critical2,
+      'Proj. Média': projMedia
+    };
+  });
+
+  headCols = [
+    'DDD',
+    'MUNICIPIO',
+    'Qtd Bairros', // Adiciona a nova coluna ao cabeçalho
+    'Parque',      // Adiciona a nova coluna ao cabeçalho
+    'Bairros',
+    'TAV?',
+    'Bairro Alto Valor',
+    'SITE',
+    ...monthHeaders.map(m => m.display),
+    ...dateHeaders.map(h => h.display),
+    `Criticidade ${lastMonths[0].display}`,
+    `Criticidade ${lastMonths[1].display}`, 
+    'Proj. Média',
+    '% Críticos Bairro',
+    'Status Bairro'
+  ];
+  const mesAtual = currentMonths.at(-1);
+const crit2ColName = headCols.find(c =>
+  c.toLowerCase().includes('criticidade') &&
+  c.toLowerCase().includes((mesAtual || '').toLowerCase())
+);
+
+  const theadHtml = `
+    <tr>
+      ${headCols.map((c, i) => `
+        <th>
+          ${c} <button class="filter-btn" data-column="${i}" style="border:none;background:none;size: 20px;">▼</button>
+          <div class="filter-popup" data-column="${i}" style="display:none;position:absolute;z-index:1000;background:white;border:1px solid #ccc;padding:10px;">
+            <input type="text" class="popup-search form-control form-control-sm mb-2" placeholder="Pesquisar...">
+            <div class="filter-options" style="max-height:150px;overflow:auto;"></div>
+            <button class="apply-filter btn btn-sm btn-primary mt-2">Aplicar</button>
+            <button class="clear-filter btn btn-sm btn-secondary mt-1">Limpar</button>
+          </div>
+        </th>`).join('')}
+    </tr>`;
+  $('#oltTable thead').html(theadHtml);
+
+  let html = '';
+  dadosDisponibilidade.forEach((it, rowIdx) => {
+    html += '<tr>';
+    html += `<td>${it['DDD'] || ''}</td>`;
+
+    // Adiciona estrelinha se for município hunter
+    let municipio = it['MUNICIPIO'] || '';
+let municipioDisplay = municipio;
+if (municipiosHunter.includes(String(municipio).trim().toUpperCase())) {
+  municipioDisplay = '⭐ ' + municipio;
+}
+html += `<td data-municipio="${municipio}">${municipioDisplay}</td>`;
+
+    // Adiciona os valores de "Qtd Bairros" e "Parque"
+    let siteKey = String(it['SITE'] || '').trim().toUpperCase();
+    const siteExtra = window.siteExtraMap && siteKey ? window.siteExtraMap[siteKey] : null;
+    html += `<td>${siteExtra && siteExtra['Qtd Bairro'] ? siteExtra['Qtd Bairro'] : '-'}</td>`;
+    html += `<td>${siteExtra && siteExtra['Parque'] ? siteExtra['Parque'] : '-'}</td>`;
+
+    html += `<td class="bairro-column">${siteExtra && siteExtra['Bairros'] ? siteExtra['Bairros'] : '-'}</td>`;
+    html += `<td>${siteExtra && siteExtra['TAV?'] ? siteExtra['TAV?'] : 'Não'}</td>`;
+    html += `<td>${siteExtra && siteExtra['Bairro Alto Valor'] ? siteExtra['Bairro Alto Valor'] : 'Não'}</td>`;
+    html += `<td>${it['SITE'] || ''}</td>`;
+    monthHeaders.forEach((m, colIdx) => {
+      const val = it[m.key];
+      const n = val == null || val === '' ? null : parseFloat(val.toString().replace(',', '.'));
+      let bg = '';
+      let color = '';
+      if (n === 100) {
+        bg = '#337031';
+        color = '#ffffff';
+      } else if (n > 98) {
+        bg = '#00b050';
+        color = '#ffffff';
+      } else if (n > 96) {
+        bg = '#ffff00';
+        color = '#000000';
+      } else if (n != null) {
+        bg = '#ff0000';
+        color = '#ffffff';
+      }
+      const disp = (n === 100 || n === 0) ? String(n) : n != null ? n.toFixed(2).replace('.', ',') : '';
+      html += `<td class="month-cell" style="background-color:${bg}; color:${color}; cursor:pointer;" data-order="${n}" data-row="${rowIdx}" data-colkey="${m.key}" data-coldisplay="${m.display}" data-site="${it['SITE'] || ''}">${disp}</td>`;
+    });
+    dateHeaders.forEach(h => { html += formatCell(it[h.key], rowIdx, h.key, h.display, it['SITE']); });
+    html += `<td>${it[`Criticidade ${lastMonths[0].display}`]}</td>`;
+    html += `<td>${it[`Criticidade ${lastMonths[1].display}`]}</td>`;
+
+    const projMedia = it['Proj. Média'];
+    let projValue = projMedia == null || projMedia === '' || projMedia === 0 || projMedia === '0' ? 100 : parseFloat(projMedia.toString().replace(',', '.'));
+    let projBg = '';
+    let projColor = '';
+    if (projValue === 100) {
+      projBg = '#337031';
+      projColor = '#ffffff';
+    } else if (projValue >= 98 && projValue < 100) {
+      projBg = '#00b050';
+      projColor = '#ffffff';
+    } else if (projValue >= 96 && projValue < 98) {
+      projBg = '#ffff00';
+      projColor = '#000000';
+    } else if (projValue < 96) {
+      projBg = '#ff0000';
+      projColor = '#ffffff';
+    }
+    let projDisplay = projValue === 100 ? '100' : (projMedia != null && projMedia !== '' ? projMedia : '');
+    projDisplay = projDisplay.toString().replace('.', ',');
+    html += `<td class="proj-media-cell" style="background-color:${projBg}; color:${projColor};" data-order="${projValue}">${projDisplay}</td>`;
+
+
+ // 🔍 Cálculo % Críticos Bairro e Status
+let bairro = siteExtra?.['Bairros']?.toString().trim().toUpperCase();
+let criticos = 0;
+let total = 0;
+if (bairro) {
+  dadosDisponibilidade.forEach(other => {
+const otherSite = String(other.SITE || '').trim().toUpperCase();
+    const otherExtra = window.siteExtraMap[otherSite];
+    const otherBairro = otherExtra?.['Bairros']?.toString().trim().toUpperCase();
+    const qtd = Number(otherExtra?.['Qtd Bairro'] || 0);
+    const parque = Number(otherExtra?.['Parque'] || 0);
+    const crit = other[crit2ColName];
+ 
+ 
+    if (otherBairro === bairro) {
+      total++;
+      if (crit === 'Crítico') criticos++;
+    }
+  });
+}
+let percCritico = total ? ((criticos / total) * 100).toFixed(0) : null;
+let percFormatado = percCritico !== null ? `${percCritico}%` : '-';
+let statusBairro = (percCritico !== null && percCritico >= 10) ? 'Crítico' : 'Não Crítico';
+ 
+html += `<td>${percFormatado}</td>`;
+html += `<td>${statusBairro}</td>`;
+
+
+    html += '</tr>';
+  });
+  $('#oltTable tbody').html(html);
+
+  addCausaIndicators();
+
+  table = $('#oltTable').DataTable({
+    deferRender: true,
+    paging: true,
+    pageLength: 20,
+    ordering: true,
+    order: [[7, 'asc']],
+    scrollX: false,
+    language: {
+      paginate: { previous: 'Anterior', next: 'Próximo' },
+      info: 'Mostrando _START_ a _END_ de _TOTAL_',
+      infoEmpty: 'Mostrando 0 a 0 de 0',
+      zeroRecords: 'Nenhum registro encontrado',
+      search: ''
+    },
+    columnDefs: [
+      {
+        targets: headCols.length - 1,
+        type: 'num',
+        orderDataType: 'dom-data-order'
+      },
+      { targets: '_all', orderable: false }
+    ]
+  });
+
+  table.on('draw', function () {
+    updateCardsComFiltros();
+  });
+
+  updateCards();
+
+  $('#oltTable tbody').on('click', 'td', function () {
+    const $cell = $(this);
+    const rowIdx = $cell.data('row');
+    const colKey = $cell.data('colkey');
+    const colDisplay = $cell.data('coldisplay');
+    const site = $cell.data('site');
+
+    if (rowIdx !== undefined && colKey && site) {
+      const rowData = dadosDisponibilidade[rowIdx];
+      showEditModal(rowData, colKey, colDisplay, this);
+    }
+  });
+}
+
+function addCausaIndicators() {
+  $('#oltTable td.month-cell, #oltTable td.date-cell').each(function () {
+    const $td = $(this);
+    const rowIdx = $td.data('row');
+    const colKey = $td.data('colkey');
+    const site = $td.data('site');
+    if (!site || !colKey) return;
+
+    const id = btoa(`${site}|${colKey}`);
+
+    db.ref('dispmovel/' + id).on('value', snap => {
+      const val = snap.val();
+      const existing = $td.find('.causa-indicator');
+      const existingNok = $td.find('.nok-indicator');
+      const hasCausa = val && (val.causa1 || val.causa2 || val.causa3 || val.solucao);
+
+      $td.css('position', 'relative');
+
+      // Bolinha azul
+      if (hasCausa && existing.length === 0) {
+        $td.append('<span class="causa-indicator" style="position:absolute;top:3px;left:5px;width:20px;height:20px;background:#0011ff;border-radius:50%;display:inline-block;border:2px solid #fff;z-index:2;"></span>');
+      } else if (!hasCausa && existing.length > 0) {
+        existing.remove();
+      }
+
+      // Bolinha laranja neon com ⚠️ se NOK
+      if (hasCausa && val && val.okNok === "NOK") {
+        if (existingNok.length === 0) {
+          $td.append('<span class="nok-indicator" style="position:absolute;top:27px;left:5px;width:20px;height:20px;background:#ff9100;box-shadow:0 0 8px 2px #ff9100;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;z-index:2;font-size:15px;">⚠️</span>');
+        }
+      } else if (existingNok.length > 0) {
+        existingNok.remove();
+      }
+    });
+  });
+}
+
+// Substitua a chamada de updateCards() por esta versão assíncrona:
+async function updateCards() {
+  if (!dadosSitesBairro || !dadosDisponibilidade) {
+    console.error('Dados indisponíveis para atualizar os cartões.');
+    return;
+  }
+
+  const filtered = dadosDisponibilidade.filter(i => isSiteBairro(i.SITE));
+  const total = filtered.length;
+
+  const mesAtual = currentMonths.at(-1);
+  const crit2ColName = headCols.find(c =>
+    c.toLowerCase().includes('criticidade') &&
+    c.toLowerCase().includes((mesAtual || '').toLowerCase())
+  );
+
+  let crit = 0, alert = 0, nonc = 0;
+  let totalBairro = 0;
+  filtered.forEach(i => {
+    const val = i[crit2ColName];
+    if (val === 'Crítico') crit++;
+    else if (val === 'Alerta') alert++;
+    else nonc++;
+    totalBairro++;
+  });
+
+  $('#totalSitesCard').text(`Total de Sites: ${dadosDisponibilidade.length}`);
+  $('#sitesBairroCard').text(`Total Sites Bairro: ${totalBairro}`);
+  // 🧠 Conta bairros críticos com base na coluna "Status Bairro"
+const bairrosCriticos = new Set();
+ 
+ filtered.forEach(i => {
+ const siteKey = String(i.SITE || '').trim().toUpperCase();
+   const extra = window.siteExtraMap[siteKey];
+   const bairro = extra?.['Bairros']?.toString().trim().toUpperCase();
+   const statusBairro = (() => {
+     let criticos = 0, total = 0;
+     if (bairro) {
+  dadosDisponibilidade.forEach(other => {
+const otherSite = String(other.SITE || '').trim().toUpperCase();
+    const otherExtra = window.siteExtraMap[otherSite];
+    const otherBairro = otherExtra?.['Bairros']?.toString().trim().toUpperCase();
+    const qtd = Number(otherExtra?.['Qtd Bairro'] || 0);
+    const parque = Number(otherExtra?.['Parque'] || 0);
+    const crit = other[crit2ColName];
+ 
+    const isBairroValido = qtd > 3 && parque >= 20000;
+ 
+    if (otherBairro === bairro && isBairroValido) {
+      total++;
+      if (crit === 'Crítico') criticos++;
+    }
+  });
+}
+     let perc = total ? (criticos / total) * 100 : 0;
+     return perc >= 10 ? 'Crítico' : 'Não Crítico';
+   })();
+  
+   if (statusBairro === 'Crítico' && bairro) {
+     bairrosCriticos.add(bairro);
+   }
+ });
+  
+ $('#criticalSitesCard').text(`Sites Críticos: ${crit} | Bairros Críticos: ${bairrosCriticos.size}`);
+ 
+  $('#alertSitesCard').text(`Sites em Alerta: ${alert}`);
+  $('#nonCriticalSitesCard').text(`Sites Não Críticos: ${nonc}`);
+
+  salvarCriticosDiario();
+
+}
+
+// Faça o mesmo ajuste para updateCardsComFiltros se necessário:
+async function updateCardsComFiltros() {
+  if (!table || !dadosSitesBairro) return;
+
+  const filteredRows = table.rows({ search: 'applied' }).data().toArray();
+
+  const siteIndex = headCols.findIndex(c => c === 'SITE');
+  const bairroIndex = headCols.findIndex(c => c === 'Bairros');
+  const siteBairroSet = new Set(dadosSitesBairro.map(s => String(s.Site).trim().toUpperCase()));
+  const mesAtual = currentMonths.at(-1);
+
+  let total = filteredRows.length;
+  let totalBairro = 0;
+  const bairrosUnicos = new Set();
+
+  filteredRows.forEach(row => {
+    const site = $('<div>').html(row[siteIndex]).text().trim();
+    const bairro = $('<div>').html(row[bairroIndex]).text().trim();
+      if (isSiteBairro(site)) totalBairro++; // 👈 nova regra aqui
+      if (bairro && bairro !== '-') bairrosUnicos.add(bairro); // Ignora valores "-"
+  });
+
+  $('#totalSitesCard').text(`Total de Sites: ${total}`);
+  $('#sitesBairroCard').text(`Sites: ${totalBairro} / Bairro: ${bairrosUnicos.size}`);
+}
+
+
+  
+
+    function setupFilters() {
+      function populate(selector, field) {
+        const set = new Set(dadosDisponibilidade.map(i=>i[field]?.trim()));
+        const drop = $(selector).empty();
+        drop.append(`<div class="filter-item" data-value="select-all"><input type="checkbox" class="select-all-checkbox"> Selecionar Todos</div>`);
+        set.forEach(v=>{ if(v) drop.append(`<div class="filter-item" data-value="${v}"><input type="checkbox" class="filter-checkbox" data-value="${v}"> ${v}</div>`); });
+      }
+      populate('#dddDropdown','DDD');
+      populate('#muniDropdown','MUNICIPIO');
+      populate('#siteDropdown','SITE');
+
+      function setup(inputSel, dropSel, colIndex) {
+        const input=$(inputSel), dropdown=$(dropSel), selected=new Set(); let focusIdx=-1;
+        input.on('focus input', ()=>{
+          dropdown.addClass('active');
+          const q=input.val().toLowerCase();
+          const items=dropdown.children().filter(function(){return $(this).text().toLowerCase().includes(q);});
+          dropdown.children().hide(); items.show(); items.removeClass('focused');
+          if(items.length){ focusIdx=0; $(items[0]).addClass('focused'); } else focusIdx=-1;
+        });
+        dropdown.on('click','.filter-item',function(e){ e.stopPropagation(); const cb=$(this).find('input'); const val=$(this).data('value');
+          if(val==='select-all'){ const chk=cb.prop('checked'); dropdown.find('.filter-checkbox').prop('checked',chk);
+            if(chk) dropdown.find('.filter-checkbox').each((_,c)=>selected.add($(c).data('value')));
+            else selected.clear();
+          } else {
+            cb.prop('checked',!cb.prop('checked'));
+            if(cb.prop('checked')) selected.add(val);
+            else{ selected.delete(val); dropdown.find('.select-all-checkbox').prop('checked',false); }
+          }
+          table.column(colIndex).search([...selected].join('|'),true,false).draw();
+        });
+        input.on('keydown',e=>{
+          const items=dropdown.children(':visible');
+          if(e.key==='ArrowDown'){ e.preventDefault(); focusIdx=(focusIdx+1)%items.length; items.removeClass('focused'); $(items[focusIdx]).addClass('focused'); }
+          else if(e.key==='ArrowUp'){ e.preventDefault(); focusIdx=(focusIdx-1+items.length)%items.length; items.removeClass('focused'); $(items[focusIdx]).addClass('focused'); }
+          else if(e.key==='Enter'){ e.preventDefault(); if(focusIdx>=0) $(items[focusIdx]).trigger('click'); }
+        });
+        $(document).click(e=>{ if(!$(e.target).closest(inputSel+','+dropSel).length) dropdown.removeClass('active'); });
+      }
+      setup('#dddFilterInput','#dddDropdown',0);
+      setup('#muniFilterInput','#muniDropdown',1);
+      setup('#siteFilterInput','#siteDropdown',2);
+    }
+
+    
+
+// ...existing code...
+function setupAdvancedFilters() {
+  $('.filter-btn').off('click').on('click', function (e) {
+    e.stopPropagation();
+    $('.filter-popup, #filterContainer').hide();
+
+    const index = $(this).data('column');
+    let popup = $('#filterContainer');
+    popup.empty();
+
+    let header = $(
+      `<div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-weight:bold;font-size:18px;">Filtro Avançado</span>
+        <button class="close-popup"
+                style="width:32px;height:32px;border-radius:50%;background-color:#ff8b72;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:#fff;">
+          &times;
+        </button>
+      </div>
+      <hr style="margin:8px 0;">`
+    );
+
+    let searchInput = $('<input type="text" class="popup-search form-control form-control-sm mb-2" placeholder="Pesquisar valor...">');
+
+    // NOVO: Filtro numérico
+    let numericFilter = $(`
+      <div class="mb-2" style="font-size:15px;">
+        <label>Filtro numérico:</label>
+        <select class="form-select form-select-sm mb-1" id="numericType">
+          <option value="">Selecione</option>
+          <option value="between">Entre</option>
+          <option value="lt">Abaixo de</option>
+          <option value="gt">Acima de</option>
+        </select>
+        <div id="numericInputs" style="display:flex;gap:6px;margin-top:4px;"></div>
+      </div>
+    `);
+
+    numericFilter.find('#numericType').on('change', function () {
+      const val = $(this).val();
+      const inputs = numericFilter.find('#numericInputs');
+      inputs.empty();
+      if (val === 'between') {
+        inputs.append('<input type="number" class="form-control form-control-sm" id="numMin"  min="0" max="100" placeholder="Mínimo" style="width:125px;">');
+        inputs.append('<input type="number" class="form-control form-control-sm" id="numMax"  min="0" max="100" placeholder="Máximo" style="width:125px;">');
+      } else if (val === 'lt') {
+        inputs.append('<input type="number" class="form-control form-control-sm" id="numMax"  min="0" max="100" placeholder="Máximo" style="width:125px;">');
+      } else if (val === 'gt') {
+        inputs.append('<input type="number" class="form-control form-control-sm" id="numMin"  min="0" max="100" placeholder="Mínimo" style="width:125px;">');
+      }
+    });
+
+    let colorFilter = null;
+    if (/disp|proj|%|média|estimulada|^\d{2}\/\d{2}|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)$/i.test(headCols[index])) {
+      colorFilter = $(
+        `<div class="mb-2" style="font-size:15px;">
+          <span style="margin-right:8px;">Cor:</span>
+          <span class="color-dot" data-color="darkgreen" style="background:#337031;" title="Ótimo"></span>
+          <span class="color-dot" data-color="lightgreen" style="background:#00b050;" title="Bom"></span>
+          <span class="color-dot" data-color="orange" style="background:#ffff00;" title="Alerta"></span>
+          <span class="color-dot" data-color="red" style="background:#ff0000;" title="Crítico"></span>
+          <span class="color-dot" data-color="all" style="background:#ccc;border:1px solid #888;" title="Todas"></span>
+        </div>`
+      );
+    }
+
+    let filterOptions = $('<div class="filter-options mb-2" style="max-height:180px;overflow:auto;border:1px solid #eee;border-radius:6px;padding:6px;background:#fafbfc;"></div>');
+    const values = new Set();
+
+    table.column(index, { search: 'applied' }).data().each(function (val) {
+      const texto = $('<div>').html(val).text().trim();
+      if (texto) values.add(texto);
+    });
+
+    [...values].sort().forEach(v => {
+      filterOptions.append(`<div><label><input type="checkbox" value="${v}"> ${v}</label></div>`);
+    });
+
+    let sortBtns = $(
+      `<div class="filter-sort mb-2" style="font-size:15px;">
+        <span style="margin-right:8px;">Ordenar:</span>
+        <button class="btn btn-sm btn-outline-primary sort-asc">A-Z/↑</button>
+        <button class="btn btn-sm btn-outline-primary sort-desc">Z-A/↓</button>
+        <button class="btn btn-sm btn-outline-secondary sort-clear">Limpar</button>
+      </div>`
+    );
+
+    let applyButton = $('<button class="apply-filter btn btn-success w-100 mt-2">Aplicar Filtro</button>');
+    let clearButton = $('<button class="clear-filter btn btn-secondary w-100 mt-1">Limpar Filtros</button>');
+
+    popup.append(header, searchInput, numericFilter);
+    if (colorFilter) popup.append(colorFilter);
+    popup.append(filterOptions, sortBtns, applyButton, clearButton);
+
+    popup.css({
+      position: 'absolute',
+      zIndex: 9999,
+      top: e.pageY + 10,
+      left: e.pageX + 190,
+      minWidth: '260px',
+      maxWidth: '350px',
+      background: '#fff',
+      border: '1px solid #bbb',
+      borderRadius: '10px',
+      boxShadow: '0 4px 18px rgba(0,0,0,0.13)',
+      padding: '18px 18px 12px 18px',
+      display: 'block',
+      zoom: '190%'
+    }).data('column', index);
+
+    popup.find('.close-popup').on('click', () => popup.hide());
+
+    searchInput.on('keyup', function () {
+      let val = $(this).val().toLowerCase();
+      filterOptions.find('div').each(function () {
+        $(this).toggle($(this).text().toLowerCase().includes(val));
+      });
+    });
+
+    if (colorFilter) {
+      colorFilter.find('.color-dot').on('click', function () {
+        colorFilter.find('.color-dot').removeClass('selected');
+        $(this).addClass('selected');
+      });
+    }
+
+    sortBtns.find('.sort-asc').on('click', () => table.order([index, 'asc']).draw());
+    sortBtns.find('.sort-desc').on('click', () => table.order([index, 'desc']).draw());
+    sortBtns.find('.sort-clear').on('click', () => table.order([]).draw());
+
+    applyButton.on('click', function () {
+  // Obtém o tipo de filtro numérico selecionado
+  const type = popup.find('#numericType').val();
+  let min = parseFloat(popup.find('#numMin').val()?.replace(',', '.'));
+  let max = parseFloat(popup.find('#numMax').val()?.replace(',', '.'));
+
+  // Remove filtro numérico customizado anterior desta coluna
+  $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f => !(f._numericCustom && f._col === index));
+
+  if (type && ((type === 'between' && !isNaN(min) && !isNaN(max)) || (type === 'lt' && !isNaN(max)) || (type === 'gt' && !isNaN(min)))) {
+    // Adiciona filtro numérico customizado
+    const numericFilterFn = function(settings, data, dataIndex) {
+      const val = $('<div>').html(data[index]).text().replace(',', '.').replace('%', '').trim();
+      const num = parseFloat(val);
+      if (isNaN(num)) return false;
+      if (type === 'between') {
+        return num >= min && num <= max;
+      } else if (type === 'lt') {
+        return num < max;
+      } else if (type === 'gt') {
+        return num > min;
+      }
+      return true;
+    };
+    numericFilterFn._numericCustom = true;
+    numericFilterFn._col = index;
+    $.fn.dataTable.ext.search.push(numericFilterFn);
+    table.draw();
+
+  if (typeof updateCardsComFiltros === 'function') updateCardsComFiltros();
+
+  } else {
+    // Remove filtro numérico customizado se não usado
+    $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f => !(f._numericCustom && f._col === index));
+    // Filtro por checkbox
+    let regex = '';
+    const vals = filterOptions.find('input[type="checkbox"]:checked').map(function () {
+      return '^' + $.fn.dataTable.util.escapeRegex($(this).val()) + '$';
+    }).get();
+    regex = vals.join('|');
+    // Filtro por cor
+    if (colorFilter) {
+      const selectedColor = colorFilter.find('.color-dot.selected').data('color');
+      if (selectedColor && selectedColor !== 'all') {
+        const colorRegex = {
+          darkgreen: '^100$',
+          lightgreen: '(^9[8-9](,\\d\\d)?$|^99(,0{1,2})?$)',
+          orange: '(^9[7](,\\d\\d)?$|^96(,\\d\\d)?$)',
+          red: '(^([0-8]?\\d(,\\d\\d)?|9[0-5](,\\d\\d)?)$)'
+        }[selectedColor];
+        regex = regex ? `(?=.*${regex})${colorRegex}` : colorRegex;
+      }
+    }
+    table.column(index).search(regex, true, false).draw();
+  }
+  popup.hide();
+  
+});
+clearButton.on('click', function () {
+  // Remove filtro numérico customizado desta coluna
+  $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f => !(f._numericCustom && f._col === index));
+  // Limpa filtro de texto/checkbox
+  table.column(index).search('');
+  // Limpa checkboxes
+  filterOptions.find('input[type="checkbox"]').prop('checked', false);
+  // Limpa seleção de cor
+  if (colorFilter) colorFilter.find('.color-dot').removeClass('selected');
+  // Limpa campos numéricos
+  popup.find('#numericType').val('');
+  popup.find('#numericInputs').empty();
+  // Redesenha a tabela para remover o filtro numérico
+  table.draw();
+  popup.hide();
+});
+  });
+
+  $(document).off('click.filtroFechamento').on('click.filtroFechamento', function (e) {
+    const $target = $(e.target);
+    if (
+      !$target.closest('.filter-btn').length &&
+      !$target.closest('#filterContainer').length
+    ) {
+      $('#filterContainer').hide();
+    }
+  });
+}
+
+
+
+
+function setupActions() {
+$('#clearFilters').on('click', () => {
+  table.search(''); // limpa filtro global
+  $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f => !f._numericCustom); // 👈 isso aqui
+
+  table.columns().every(function (colIdx) {
+    const colName = headCols[colIdx];
+    if (colName === 'DDD' && filtroDddPorBotao) {
+      return; // mantém filtro de DDD se veio de ABI/TEL
+    }
+    this.search('');
+  });
+
+  table.order([5, 'asc']).draw();
+
+  $('.filter-btn').removeClass('filtered');
+  $('.filter-checkbox, .select-all-checkbox').prop('checked', false);
+  $('.dropdown-list').removeClass('active');
+});
+
+
+  $('#exportExcel').on('click', () => {
+    const data = table.rows({ search: 'applied' }).nodes().toArray()
+      .map(r => $(r).find('td').toArray().map(c => $(c).text().trim()));
+    const ws = XLSX.utils.aoa_to_sheet([headCols, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Disponibilidade');
+    XLSX.writeFile(wb, 'Disponibilidade_Móvel.xlsx');
+  });
+
+  $('#exportCausas').on('click', async () => {
+  const rows = table.rows({ search: 'applied' }).nodes().toArray();
+  const exportData = [];
+  if (!rows.length) return;
+
+  const siteIdx = headCols.findIndex(c => c === 'SITE');
+  const muniIdx = headCols.findIndex(c => c === 'MUNICIPIO');
+
+  for (let i = 0; i < rows.length; i++) {
+    const tds = $(rows[i]).find('td');
+    const site = $(tds[siteIdx]).text().trim();
+    const municipio = $(tds[muniIdx]).text().trim();
+    const rowData = dadosDisponibilidade.find(r => String(r.SITE).trim() === site);
+    if (!site || !rowData) continue;
+
+    for (const month of currentMonths) {
+      const colKey = month;
+      const id = btoa(`${site}|${colKey}`);
+      try {
+        const snap = await db.ref('dispmovel/' + id).once('value');
+        const val = snap.val();
+        // Compatibilidade retroativa para solucao1
+        const solucao1 = (val && (val.solucao1 || val.solucao || '')) || '';
+        const solucao2 = (val && val.solucao2) || '';
+        const solucao3 = (val && val.solucao3) || '';
+        // Só exporta se houver pelo menos uma causa ou ação preenchida
+        if (
+          val &&
+          (
+            (val.causa1 && val.causa1.trim() !== '') ||
+            (val.causa2 && val.causa2.trim() !== '') ||
+            (val.causa3 && val.causa3.trim() !== '') ||
+            (solucao1 && solucao1.trim() !== '') ||
+            (solucao2 && solucao2.trim() !== '') ||
+            (solucao3 && solucao3.trim() !== '')
+          )
+        ) {
+          exportData.push({
+            SITE: site,
+            MUNICIPIO: municipio,
+            MÊS: colKey,
+            DISPONIBILIDADE: rowData[colKey] || '',
+            'CAUSA 1': val.causa1 || '',
+            'AÇÃO REALIZADA 1': solucao1,
+            'CAUSA 2': val.causa2 || '',
+            'AÇÃO REALIZADA 2': solucao2,
+            'CAUSA 3': val.causa3 || '',
+            'AÇÃO REALIZADA 3': solucao3,
+            RESPONSÁVEL: val.responsavel || ''
+          });
+        }
+      } catch (err) {}
+    }
+  }
+
+  if (exportData.length === 0) {
+    alert("Nenhuma causa preenchida encontrada.");
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Causas');
+  XLSX.writeFile(workbook, 'Causas_Com_Disponibilidade.xlsx');
+});
+
+
+$('#exportCausasDiario').on('click', async () => {
+  // Pega o mês atual e o anterior
+  const hoje = new Date();
+  const mesesValidos = [];
+  for (let i = 0; i < 2; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const ano = d.getFullYear();
+    mesesValidos.push(`${mes}/${ano}`);
+  }
+
+  // Busca todos os registros do diário
+  const snapshot = await db.ref('dispmovel').once('value');
+  const allData = snapshot.val() || {};
+  const exportData = [];
+
+  // SITE/MUNICIPIO lookup
+  const siteToMunicipio = {};
+  dadosDisponibilidade.forEach(r => {
+    if (r.SITE) siteToMunicipio[String(r.SITE).trim()] = r.MUNICIPIO || '';
+  });
+
+  Object.entries(allData).forEach(([id, val]) => {
+    try {
+      const decoded = atob(id);
+      const [site, colKey] = decoded.split('|');
+      // Só pega datas no formato dd/mm/yyyy
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(colKey)) return;
+
+      // Verifica se está nos meses válidos
+      const [dia, mes, ano] = colKey.split('/');
+      const mesAno = `${mes}/${ano}`;
+      if (!mesesValidos.includes(mesAno)) return;
+
+      // Só exporta se houver pelo menos uma causa ou ação preenchida
+      const solucao1 = (val.solucao1 || val.solucao || '') || '';
+      const solucao2 = val.solucao2 || '';
+      const solucao3 = val.solucao3 || '';
+      if (
+        (val.causa1 && val.causa1.trim() !== '') ||
+        (val.causa2 && val.causa2.trim() !== '') ||
+        (val.causa3 && val.causa3.trim() !== '') ||
+        (solucao1 && solucao1.trim() !== '') ||
+        (solucao2 && solucao2.trim() !== '') ||
+        (solucao3 && solucao3.trim() !== '')
+      ) {
+        exportData.push({
+          SITE: site,
+          MUNICIPIO: siteToMunicipio[site] || '',
+          DATA: colKey,
+          DISPONIBILIDADE: (dadosDisponibilidade.find(r => String(r.SITE).trim() === site)?.[colKey]) || '',
+          'CAUSA 1': val.causa1 || '',
+          'AÇÃO 1': solucao1,
+          'CAUSA 2': val.causa2 || '',
+          'AÇÃO 2': solucao2,
+          'CAUSA 3': val.causa3 || '',
+          'AÇÃO 3': solucao3,
+          RESPONSÁVEL: val.responsavel || ''
+        });
+      }
+    } catch {}
+  });
+
+  if (exportData.length === 0) {
+    alert("Nenhuma causa diária preenchida encontrada nos últimos 2 meses.");
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Causas Diário');
+  XLSX.writeFile(workbook, 'Causas_Diario_Com_Disponibilidade.xlsx');
+});
+
+
+
+headCols = headCols.map(c => c.replace(/\s*▼$/, '').trim());
+
+const siteIdx = headCols.findIndex(c => c === 'SITE');
+
+const crit2Idx = headCols.findIndex(c => c.startsWith('Criticidade') && c.includes(currentMonths.at(-1)));
+
+const bairroRegex = dadosSitesBairro.map(s => `^${s.Site}$`).join('|');
+
+function cardFilter(id, crit, showAll = false) {
+  $(id).off('click').on('click', () => {
+    // Obtenha os filtros já aplicados
+    const currentSearch = table.column(siteIdx).search() || '';
+    const bairroRegex = dadosSitesBairro.map(s => `^${s.Site}$`).join('|');
+
+    // Combine o filtro atual com o filtro do card
+    let newSearch = currentSearch;
+    if (!showAll) {
+      newSearch = currentSearch
+        ? `(${currentSearch})|(${bairroRegex})`
+        : bairroRegex;
+    }
+
+    // Aplique o filtro combinado
+    table.column(siteIdx).search(newSearch, true, false);
+
+    if (crit !== null) {
+      table.column(crit2Idx).search(`^${crit}$`, true, false);
+    }
+
+    table.draw();
+  });
+}
+
+
+$('#evolucaoBtn').on('click', function () {
+  $('#evolucaoContainer').toggle();
+});
+
+
+  cardFilter('#totalSitesCard', null, true);
+  cardFilter('#criticalSitesCard', 'Crítico');
+  cardFilter('#alertSitesCard', 'Alerta');
+  cardFilter('#nonCriticalSitesCard', 'Não Crítico');
+
+  $('#cardCriticosHoje').off('click').on('click', () => {
+  const sites = criticosHoje.map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardSegueCritico').off('click').on('click', () => {
+  const sites = criticosHoje.filter(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    return valAnterior < 96 && valRetrasado < 96;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardCritico').off('click').on('click', () => {
+  const sites = criticosHoje.filter(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+
+    const algumMesRuim = (valAnterior < 96) || (valRetrasado < 96);
+    const ambosRuins = (valAnterior < 96) && (valRetrasado < 96);
+
+    return algumMesRuim && !ambosRuins && valAtual < 94;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardPodeSair').off('click').on('click', () => {
+  const sites = criticosHoje.filter(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+
+    const algumMesRuim = (valAnterior < 96) || (valRetrasado < 96);
+    const ambosRuins = (valAnterior < 96) && (valRetrasado < 96);
+
+    return algumMesRuim && !ambosRuins && valAtual >= 94 && valAtual < 96;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardProjetado').off('click').on('click', () => {
+  const sites = criticosHoje.filter(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+
+    const abaixo96Anterior = valAnterior < 96;
+    const abaixo96Retrasado = valRetrasado < 96;
+    const ambosRuins = abaixo96Anterior && abaixo96Retrasado;
+    const algumRuim = abaixo96Anterior || abaixo96Retrasado;
+
+    const ehSegueCritico = ambosRuins;
+    const ehCritico = algumRuim && !ambosRuins && valAtual < 94;
+
+    return ehSegueCritico || ehCritico;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardPodeVirarCritico').off('click').on('click', () => {
+  const sites = dadosDisponibilidade.filter(site => {
+    if (!isSiteBairro(site.SITE)) return false;
+
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+
+    const algumMesRuim = (valAnterior < 96) || (valRetrasado < 96);
+
+    // Regra ajustada: valAtual >= 96 && valAtual < 96.5
+    return algumMesRuim && (valAtual >= 96 && valAtual < 96.5);
+  }).map(s => s.SITE);
+
+  aplicarFiltroNosSites(sites);
+});
+
+
+$('#cardRetrasadoAbaixo96').off('click').on('click', () => {
+  const sites = dadosDisponibilidade.filter(site => {
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valRetrasado < 96;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardRetrasadoSaiuVoltou').off('click').on('click', () => {
+  const sites = dadosDisponibilidade.filter(site => {
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valRetrasado < 96 && valAnterior > 96 && valAtual < 96;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardPassadoAbaixo96').off('click').on('click', () => {
+  const sites = dadosDisponibilidade.filter(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valAnterior < 96;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+$('#cardPassadoSaiuVoltou').off('click').on('click', () => {
+  const sites = dadosDisponibilidade.filter(site => {
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valAnterior < 96 && valRetrasado > 96 && valAtual < 96;
+  }).map(s => s.SITE);
+  aplicarFiltroNosSites(sites);
+});
+
+
+}
+
+$('.dashboard-card').off('mouseenter mouseleave').on('mouseenter', function() {
+  const legend = $(this).attr('data-legend');
+  if (!legend) return;
+  // Remove qualquer legenda anterior deste card
+  $(this).siblings('.card-legend-tooltip').remove();
+  // Cria a legenda fixa logo abaixo do card, dentro do container
+  $('<div class="card-legend-tooltip"></div>')
+    .text(legend)
+    .insertAfter($(this));
+}).on('mouseleave', function() {
+  $(this).siblings('.card-legend-tooltip').remove();
+});
+
+
+async function renderDashboardEvolucao(filtroDdd = null) {
+  const snap = await db.ref('mensal').once('value');
+  const data = snap.val() || {};
+ 
+  let dadosFiltrados = dadosDisponibilidade;
+  if (filtroDdd === '11') {
+    dadosFiltrados = dadosDisponibilidade.filter(item => String(item.DDD).trim() === '11');
+  } else if (filtroDdd === 'not11') {
+    dadosFiltrados = dadosDisponibilidade.filter(item => String(item.DDD).trim() !== '11');
+  }
+ 
+  const labels = [], dadosSites = [], dadosBairros = [];
+ 
+  const hoje = new Date();
+  hoje.setDate(hoje.getDate() - 0);
+  const diaLimite = hoje.getDate();
+  const mesAtual1 = String(hoje.getMonth() + 1).padStart(2, '0');
+ 
+  Object.keys(data).sort().forEach(dataStr => {
+    const [dd, mm] = dataStr.split('-');
+    if (mm === mesAtual1 && parseInt(dd) <= diaLimite) {
+      labels.push(`${dd}/${mm}`);
+      const val = data[dataStr];
+      if (typeof val === 'object') {
+        dadosSites.push(val.criticos || 0);
+        dadosBairros.push(val.bairros || 0);
+      } else {
+        dadosSites.push(val || 0);
+        dadosBairros.push(0);
+      }
+    }
+  });
+ 
+  const ctx = document.getElementById('graficoEvolucao').getContext('2d');
+  if (window.chartEvolucao) window.chartEvolucao.destroy();
+ 
+  const corSite = '#dc3545';
+  const corBairro = 'orange';
+  const textColor = '#333';
+ 
+  window.chartEvolucao = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Sites Críticos',
+          data: dadosSites,
+          borderColor: corSite,
+          backgroundColor: 'rgba(220,53,69,0.1)',
+          borderWidth: 8,
+          pointRadius: 10,
+          pointBackgroundColor: corSite,
+          fill: false,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Bairros Críticos',
+          data: dadosBairros,
+          borderColor: corBairro,
+          backgroundColor: 'rgba(255,165,0,0.1)',
+          borderWidth: 8,
+          pointRadius: 10,
+          pointBackgroundColor: corBairro,
+          fill: false,
+          yAxisID: 'y'
+        }
+      ]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      animation: false,
+      hover: { mode: null },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            color: textColor,
+            boxWidth: 12,
+            padding: 15,
+            font: { size: 25, weight: 'bold' }
+          },
+          onClick: (e, legendItem, legend) => {
+            const index = legendItem.datasetIndex;
+            const chart = legend.chart;
+            const meta = chart.getDatasetMeta(index);
+meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+            chart.update();
+          }
+        },
+        tooltip: { enabled: false },
+  datalabels: {
+    color: textColor,
+    font: { weight: 'bold', size: 30 },
+    anchor: 'end',
+    align: function(context) {
+      return context.datasetIndex === 0 ? 'top' : 'bottom';
+    },
+    formatter: value => value
+  }
+},
+      scales: {
+        x: {
+          ticks: {
+            color: textColor,
+            maxRotation: 0,
+            minRotation: 0,
+            font: { size: 30, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { display: false },
+          grid: { color: '#eee' },
+          suggestedMax: Math.max(...dadosSites.concat(dadosBairros), 1) * 1.5
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  // ▼▼▼ LÓGICA DOS 4 CARTÕES ▼▼▼
+  const mesAtual = currentMonths.at(-1);
+  const mesAnterior = currentMonths.at(-2);
+  const mesRetrasado = currentMonths.at(-3);
+
+  colCriticidadeAtual = headCols.find(c =>
+    c.toLowerCase().includes('criticidade') && c.toLowerCase().includes(mesAtual.toLowerCase())
+  );
+  colAnterior = headCols.find(c => c.includes(mesAnterior));
+  colRetrasado = headCols.find(c => c.includes(mesRetrasado));
+  colAtual = headCols.find(c => c.includes(mesAtual));
+
+  criticosHoje = dadosFiltrados.filter(site =>
+    isSiteBairro(site.SITE) && site[colCriticidadeAtual] === 'Crítico'
+  );
+
+  let segueCritico = 0;
+  let critico = 0;
+  let podeSair = 0;
+
+  criticosHoje.forEach(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+
+    const abaixo96Anterior = valAnterior < 96;
+    const abaixo96Retrasado = valRetrasado < 96;
+    const algumMesRuim = abaixo96Anterior || abaixo96Retrasado;
+    const ambosRuins = abaixo96Anterior && abaixo96Retrasado;
+
+    if (ambosRuins) {
+      segueCritico++;
+    } else if (algumMesRuim) {
+      if (valAtual < 94) {
+        critico++;
+      } else if (valAtual >= 94 && valAtual < 96) {
+        podeSair++;
+      }
+    }
+  });
+
+  podeVirarCritico = dadosFiltrados.filter(site => {
+    if (!isSiteBairro(site.SITE)) return false;
+
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+
+    const algumMesRuim = (valAnterior < 96) || (valRetrasado < 96);
+    return algumMesRuim && (valAtual >= 96 && valAtual < 96.5);
+  }).length;
+
+  const projetado = segueCritico + critico;
+
+  const retrasadoAbaixo96 = dadosFiltrados.filter(site => {
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valRetrasado < 96;
+  }).length;
+
+  const retrasadoSaiuVoltou = dadosFiltrados.filter(site => {
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valRetrasado < 96 && valAnterior > 96 && valAtual < 96;
+  }).length;
+
+  const passadoAbaixo96 = dadosFiltrados.filter(site => {
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valAnterior < 96;
+  }).length;
+
+  const passadoSaiuVoltou = dadosFiltrados.filter(site => {
+    const valRetrasado = parseFloat(site[colRetrasado]?.toString().replace(',', '.') || 100);
+    const valAnterior = parseFloat(site[colAnterior]?.toString().replace(',', '.') || 100);
+    const valAtual = parseFloat(site[colAtual]?.toString().replace(',', '.') || 100);
+    return isSiteBairro(site.SITE) && valAnterior < 96 && valRetrasado > 96 && valAtual < 96;
+  }).length;
+
+  const mesRetrasadoNome = (colRetrasado || '').replace(/^.*\s/, '');
+  const mesAnteriorNome = (colAnterior || '').replace(/^.*\s/, '');
+  const mesAtualNome = (colAtual || '').replace(/^.*\s/, '');
+
+  $('#cardCriticosHoje').text(`Críticos Hoje: ${criticosHoje.length}`);
+  $('#cardSegueCritico').text(`Segue Crítico: ${segueCritico}`);
+  $('#cardCritico').text(`Crítico: ${critico}`);
+  $('#cardPodeSair').text(`Pode Sair: ${podeSair}`);
+  $('#cardPodeVirarCritico').text(`Pode Virar Crítico: ${podeVirarCritico}`);
+
+  $('#cardRetrasadoAbaixo96').html(`${mesRetrasadoNome} &lt;96: ${retrasadoAbaixo96}`);
+  $('#cardRetrasadoSaiuVoltou').html(`Sites de ${mesRetrasadoNome} &lt;96 em ${mesAtualNome}: ${retrasadoSaiuVoltou}`);
+  $('#cardPassadoAbaixo96').html(`${mesAnteriorNome} &lt;96: ${passadoAbaixo96}`);
+  $('#cardPassadoSaiuVoltou').html(`Sites de ${mesAnteriorNome} &lt;96 em ${mesAtualNome}: ${passadoSaiuVoltou}`);
+
+  $('#cardProjetado').text(`Projetado: ${projetado}`);
+}
+
+
+
+function aplicarFiltroNosSites(sites) {
+  const siteIndex = headCols.findIndex(c => c === 'SITE');
+  const regex = sites.map(s => `^${$.fn.dataTable.util.escapeRegex(s)}$`).join('|');
+  table.column(siteIndex).search(regex, true, false).draw();
+}
+
+
+
+$('#sitesBairroCard').off('click').on('click', () => {
+  const siteIdx = headCols.findIndex(c => c === 'SITE');
+  const validSites = dadosDisponibilidade
+    .map(r => r.SITE)
+    .filter(site => isSiteBairro(site))
+    .map(site => `^${$.fn.dataTable.util.escapeRegex(site)}$`);
+
+  const regex = validSites.join('|');
+  table.column(siteIdx).search(regex, true, false).draw();
+});
+
+firebase.initializeApp(window.externals.firebaseConfig);
+const db = firebase.database();
+
+    let currentEdit = null;
+
+    
+
+
+
+// Função para abrir o modal e preencher os campos, incluindo o switch OK/NOK
+function showEditModal(rowData, colKey, colDisplay, cellElem) {
+  currentEdit = { rowData, colKey, cellElem };
+  const disponibilidade = rowData[colKey]; 
+  const id = btoa(`${rowData['SITE']}|${colKey}`);
+
+  const nomeUsuario = localStorage.getItem("nomeUsuario") || "";
+  $('#responsavelInput').val(nomeUsuario);
+
+  // Cor conforme disponibilidade
+  let disponibilidadeColor = '';
+  const n = parseFloat(disponibilidade.toString().replace(',', '.'));
+  if (n === 100) {
+    disponibilidadeColor = '#337031'; 
+  } else if (n > 98) {
+    disponibilidadeColor = '#00b050'; 
+  } else if (n > 96) {
+    disponibilidadeColor = '#ffff00'; 
+  } else {
+    disponibilidadeColor = '#ff0000'; 
+  }
+
+  // Título com botão de limpar
+  $('#modalTitle').html(`
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button id="limparCausaBtn" style="
+        background: none;
+        border: none;
+        color: #e74c3c;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 4px 8px;
+      " title="Limpar dados salvos">
+        🗑️
+      </button>
+      <span>Editar: ${rowData['SITE']} - ${colDisplay} - <span style="color:${disponibilidadeColor}; font-weight:bold;">${disponibilidade}%</span></span>
+    </div>
+  `);
+
+  $('#modalMsg').hide();
+  $('#editForm')[0].reset();
+
+  // Desabilita campos inicialmente
+  $('#causaInput1, #causaInput2,#causaInput3, #solucaoInput, #responsavelInput').prop('disabled', true);
+  $('#editBtn').text('Editar');
+
+  // Preenche dados do Firebase
+  db.ref('dispmovel/' + id).once('value').then(snap => {
+    const val = snap.val() || {};
+
+    // Switch OK/NOK
+    const okNok = val.okNok || "OK";
+    $('#okNokSwitch').prop('checked', okNok === "OK");
+    $('#okNokLabel').text(okNok).css('color', okNok === "OK" ? "#337031" : "#e74c3c");
+
+    function setCausaSelect(num, value) {
+      const select = $(`#causaInput${num}`);
+      const outro = $(`#causaOutro${num}`);
+      const options = Array.from(select[0].options).map(opt => opt.value);
+      if (value && !options.includes(value)) {
+        select.val('Outro');
+        outro.val(value).show();
+      } else {
+        select.val(value || '');
+        outro.val('').hide();
+      }
+    }
+    setCausaSelect(1, val.causa1);
+    setCausaSelect(2, val.causa2);
+    setCausaSelect(3, val.causa3);
+
+    // Compatibilidade retroativa para solucao1
+    $('#solucaoInput1').val(val.solucao1 || val.solucao || '');
+    $('#solucaoInput2').val(val.solucao2 || '');
+    $('#solucaoInput3').val(val.solucao3 || '');
+
+    // Só preenche com nomeUsuario se não houver responsável salvo
+    const nomeUsuario = localStorage.getItem("nomeUsuario") || "";
+    $('#responsavelInput').val(val.responsavel || nomeUsuario);
+
+    $('#editModal').css('display', 'flex');
+
+    // Força ajuste do tamanho dos textareas
+    setTimeout(() => {
+      document.querySelectorAll('textarea.auto-resize').forEach(el => {
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+      });
+    }, 0);
+  });
+
+  // Evento do botão 🗑️
+  $('#limparCausaBtn').off('click').on('click', function () {
+    if (confirm('Tem certeza que deseja apagar os dados dessa célula?')) {
+      db.ref('dispmovel/' + id).remove().then(() => {
+        alert('Informações apagadas com sucesso!');
+        $('#editModal').hide();
+      }).catch(err => {
+        alert('Erro ao apagar: ' + err.message);
+      });
+    }
+  });
+
+
+
+}
+
+// Atualiza label do switch ao trocar
+$('#okNokSwitch').on('change', function() {
+  const isOk = $(this).is(':checked');
+  $('#okNokLabel').text(isOk ? "OK" : "NOK").css('color', isOk ? "#337031" : "#e74c3c");
+});
+
+// No submit, salva o valor do switch junto com as causas
+$('#editForm').on('submit', function(e) {
+  e.preventDefault();
+  if (!currentEdit) return;
+  const { rowData, colKey, cellElem } = currentEdit;
+  const id = btoa(`${rowData['SITE']}|${colKey}`);
+
+  function getCausaValue(num) {
+    const select = $(`#causaInput${num}`);
+    const outro = $(`#causaOutro${num}`);
+    if (select.val() === 'Outro') {
+      return outro.val() || 'Outro';
+    }
+    return select.val();
+  }
+
+  const data = {
+    okNok: $('#okNokSwitch').is(':checked') ? "OK" : "NOK",
+    causa1: getCausaValue(1),
+    causa2: getCausaValue(2),
+    causa3: getCausaValue(3),
+    solucao1: $('#solucaoInput1').val(),
+    solucao2: $('#solucaoInput2').val(),
+    solucao3: $('#solucaoInput3').val(),
+    responsavel: $('#responsavelInput').val()
+  };
+  db.ref('dispmovel/' + id).set(data, err => {
+    if (!err) {
+      $('#modalMsg').show().delay(1200).fadeOut();
+      $(cellElem).attr('data-hasinfo', '1');
+    }
+  });
+});
+
+
+$('#editBtn').on('click', function(){
+  const inputs = $('#causaInput1, #causaInput2, #causaInput3, #causaOutro1, #causaOutro2, #causaOutro3, #solucaoInput1, #solucaoInput2, #solucaoInput3, #responsavelInput');
+  const isDisabled = inputs.prop('disabled');
+  inputs.prop('disabled', !isDisabled);
+  $(this).text(isDisabled ? 'Bloquear' : 'Editar');
+});
+
+
+  document.addEventListener('input', function (event) {
+    if (event.target.classList.contains('auto-resize')) {
+      event.target.style.height = 'auto'; // Redefine a altura
+      event.target.style.height = `${event.target.scrollHeight}px`; // Ajusta para o conteúdo
+    }
+  });
+
+  function setupAbiTelButtons() {const dddIdx = headCols.findIndex(c => c === 'DDD');
+
+  $('#abiBtn').off('click').on('click', function () {
+  table.column(dddIdx).search('^11$', true, false).draw();
+  filtroDddPorBotao = true;
+  filtroDddEvolucao = '11'; // <-- ABI = DDD 11
+  renderDashboardEvolucao(filtroDddEvolucao);
+  $('#abiBtn').addClass('selected-btn');
+  $('#telBtn, #spiBtn').removeClass('selected-btn');
+});
+
+$('#telBtn').off('click').on('click', function () {
+  table.column(dddIdx).search('^(?!11$).*$', true, false).draw();
+  filtroDddPorBotao = true;
+  filtroDddEvolucao = 'not11'; // <-- TEL = DDD diferente de 11
+  renderDashboardEvolucao(filtroDddEvolucao);
+  $('#telBtn').addClass('selected-btn');
+  $('#abiBtn, #spiBtn').removeClass('selected-btn');
+});
+
+$('#spiBtn').off('click').on('click', function () {
+  table.column(dddIdx).search('').draw();
+  filtroDddPorBotao = false;
+  filtroDddEvolucao = null; // <-- SPI = todos
+  renderDashboardEvolucao(filtroDddEvolucao);
+  $('#abiBtn, #telBtn, #spiBtn').removeClass('selected-btn');
+});
+
+  function atualizarFiltrosAvancados() {
+    // Força atualização das opções visíveis nas popups de filtro avançado
+    $('.filter-btn').each(function () {
+      const colIndex = $(this).data('column');
+      const popup = $('.filter-popup[data-column="' + colIndex + '"]');
+      const optionsDiv = popup.find('.filter-options');
+
+      if (optionsDiv.length) {
+        const uniqueVals = new Set();
+        table.column(colIndex, { search: 'applied' }).data().each(function (val) {
+          const texto = $('<div>').html(val).text().trim();
+          if (texto) uniqueVals.add(texto);
+        });
+
+        optionsDiv.empty();
+        [...uniqueVals].sort().forEach(v => {
+          optionsDiv.append(`<div><label><input type="checkbox" value="${v}"> ${v}</label></div>`);
+        });
+      }
+    });
+  }
+
+  $('#abiBtn').off('click').on('click', function () {
+    table.column(dddIdx).search('^11$', true, false).draw();
+    filtroDddPorBotao = true;
+    $('#abiBtn').addClass('selected-btn');
+    $('#telBtn, #spiBtn').removeClass('selected-btn');
+    setTimeout(atualizarFiltrosAvancados, 300); // Aguarda draw da tabela
+  });
+
+  $('#telBtn').off('click').on('click', function () {
+    table.column(dddIdx).search('^(?!11$).*$', true, false).draw();
+    $('#telBtn').addClass('selected-btn');
+    $('#abiBtn, #spiBtn').removeClass('selected-btn');
+    setTimeout(atualizarFiltrosAvancados, 300);
+  });
+
+  $('#spiBtn').off('click').on('click', function () {
+    table.column(dddIdx).search('').draw();
+    $('#abiBtn, #telBtn, #spiBtn').removeClass('selected-btn');
+    setTimeout(atualizarFiltrosAvancados, 300);
+  });
+}
+
+
+  </script>
+
+<script>
+
+fetch(window.externals.dadosJson, { method: 'HEAD' })
+  .then(response => {
+      const lastModified = response.headers.get('Last-Modified');
+      if (lastModified) {
+        const dataFormatada = new Date(lastModified).toLocaleString('pt-BR');
+        document.getElementById('updateInfo').textContent = `Atualizado em: ${dataFormatada}`;
+      } else {
+        document.getElementById('updateInfo').textContent = `Data de atualização indisponível`;
+      }
+    })
+    .catch(err => {
+      document.getElementById('updateInfo').textContent = `Erro ao obter atualização`;
+      console.error('Erro ao buscar cabeçalho do JSON:', err);
+    });
+
+
+    function getUserData() {
+  return {
+    nome: localStorage.getItem("nomeUsuario"),
+    numero: localStorage.getItem("numeroUsuario"),
+    email: localStorage.getItem("emailUsuario"),
+    empresa: localStorage.getItem("empresaUsuario")
+  };
+}
+function isUserDataValid(data) {
+  return data.nome && data.numero && data.email && data.empresa;
+}
+function showUserModal() {
+  document.getElementById('userModal').style.display = 'flex';
+}
+function hideUserModal() {
+  document.getElementById('userModal').style.display = 'none';
+}
+</script>
+<script>
+  $(document).ready(function () {
+    // Inicialização do usuário
+    const userData = {
+      nome: localStorage.getItem("nomeUsuario"),
+      numero: localStorage.getItem("numeroUsuario"),
+      email: localStorage.getItem("emailUsuario"),
+      empresa: localStorage.getItem("empresaUsuario")
+    };
+    function isUserDataValid(data) {
+      return data.nome && data.numero && data.email && data.empresa;
+    }
+    function showUserModal() {
+      $('#userModal').css('display', 'flex');
+    }
+    function hideUserModal() {
+      $('#userModal').css('display', 'none');
+    }
+    if (!isUserDataValid(userData)) {
+      showUserModal();
+    } else {
+      hideUserModal();
+      startDashboard();
+    }
+    $('#userForm').on('submit', function (e) {
+      e.preventDefault();
+      const nome = $('#userNome').val().trim();
+      const numero = $('#userNumero').val().trim();
+      const email = $('#userEmail').val().trim();
+      const empresa = $('#userEmpresa').val();
+      if (nome && numero && email && empresa) {
+        localStorage.setItem("nomeUsuario", nome);
+        localStorage.setItem("numeroUsuario", numero);
+        localStorage.setItem("emailUsuario", email);
+        localStorage.setItem("empresaUsuario", empresa);
+        hideUserModal();
+        startDashboard();
+      }
+    });
+    $('#userModal').on('click', function(e){
+      if(e.target === this) e.stopPropagation();
+    });
+    $(window).on('keydown', function(e){
+      if($('#userModal').css('display') === 'flex' && (e.key === "Escape" || e.key === "Esc")) {
+        e.preventDefault();
+      }
+    });
+  
+    // Eventos do modal de edição
+    $('#closeModalBtn').on('click', function() {
+      $('#editModal').hide();
+    });
+    $('#editBtn').on('click', function(){
+      const inputs = $('#causaInput1, #causaInput2, #causaInput3, #solucaoInput, #responsavelInput');
+      const isDisabled = inputs.prop('disabled');
+      inputs.prop('disabled', !isDisabled);
+      $(this).text(isDisabled ? 'Bloquear' : 'Editar');
+    });
+    $('#okNokSwitch').on('change', function() {
+      const isOk = $(this).is(':checked');
+      $('#okNokLabel').text(isOk ? "OK" : "NOK").css('color', isOk ? "#337031" : "#e74c3c");
+    });
+    $('#editForm').on('submit', function(e) {
+      e.preventDefault();
+      if (!currentEdit) return;
+      const { rowData, colKey, cellElem } = currentEdit;
+      const id = btoa(`${rowData['SITE']}|${colKey}`);
+      function getCausaValue(num) {
+        const select = $(`#causaInput${num}`);
+        const outro = $(`#causaOutro${num}`);
+        if (select.val() === 'Outro') {
+          return outro.val() || 'Outro';
+        }
+        return select.val();
+      }
+      const data = {
+        okNok: $('#okNokSwitch').is(':checked') ? "OK" : "NOK",
+        causa1: getCausaValue(1),
+        causa2: getCausaValue(2),
+        causa3: getCausaValue(3),
+        solucao1: $('#solucaoInput1').val(),
+        solucao2: $('#solucaoInput2').val(),
+        solucao3: $('#solucaoInput3').val(),
+        responsavel: $('#responsavelInput').val()
+      };
+      db.ref('dispmovel/' + id).set(data, err => {
+        if (!err) {
+          $('#modalMsg').show().delay(1200).fadeOut();
+          $(cellElem).attr('data-hasinfo', '1');
+        }
+      });
+    });
+  
+    // Auto-resize para textareas
+    $(document).on('input', 'textarea.auto-resize', function () {
+      this.style.height = 'auto';
+      this.style.height = `${this.scrollHeight}px`;
+    });
+  
+    // Causas "Outro"
+    [1,2,3].forEach(num => {
+      $(`#causaInput${num}`).on('change', function () {
+        const outro = $(`#causaOutro${num}`);
+        if (this.value === 'Outro') {
+          outro.show().prop('required', true);
+        } else {
+          outro.hide().prop('required', false).val('');
+        }
+      });
+    });
+  
+    // Inicialização dos botões ABI/TEL/SPI/HUNTERS
+    const interval = setInterval(function() {
+      if (typeof table !== 'undefined' && table) {
+        setupAbiTelButtons();
+        setupHunterButton();
+        clearInterval(interval);
+      }
+    }, 200);
+  });
+
+  $('#editBtn').on('click', function(){
+  const inputs = $('#causaInput1, #causaOutro1, #solucaoInput1, #causaInput2, #causaOutro2, #solucaoInput2, #causaInput3, #causaOutro3, #solucaoInput3, #responsavelInput');
+  const isDisabled = inputs.prop('disabled');
+  inputs.prop('disabled', !isDisabled);
+  
+  const btn = $(this);
+  btn.text(isDisabled ? 'Bloquear' : 'Editar');
+});
+  </script>
+</body>
+</html>
